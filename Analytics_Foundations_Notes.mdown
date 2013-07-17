@@ -202,10 +202,11 @@ In this demo, the design is not balanced. The groups are not equally sized (look
 ####Partitioning Variability in ANOVA
 
 In ANOVA, Total Variation (measured by the corrected total sum of squares) is partitioned into two components:
+
 1. The Between Group Variation (Model Sum of Squares)
 	* Variability explained by the independent variable and therefore represented by the between treatment sum of squares. Calculated as the weighted (by group size) sum of the squared differences between the mean for each group and the overall mean. (SS_M) ![alt text](Pictures/Between_Group_Variation.png)
 2. The Within Group variation (Error Sum of Squares)
-	* Variability not explained by the model. Also referred to as _within treatement variability or residual sum of squares_. It is calculated as the sum of the squared differences between each observed value and the mean for its group. (SS_E) ![alt text](Pictures/Within_Group_Variation.png)
+  * Variability not explained by the model. Also referred to as _within treatement variability or residual sum of squares_. It is calculated as the sum of the squared differences between each observed value and the mean for its group. (SS_E) ![alt text](Pictures/Within_Group_Variation.png)
 
 ANOVA breaks apart the variance of the dependent variable to determine whether the between-group variation is a significant portion of the total variation.
 
@@ -310,9 +311,8 @@ Dependent Variable: BulbWt
 
       Fertilizer                   3      0.00457996      0.00152665       1.96    0.1432
 
-                          Testing for Equality of Means with PROC GLM                         5
+```
 
- ```
 
 Output divided into 3 parts
 	- The analysis of variance table
