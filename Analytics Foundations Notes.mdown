@@ -6,14 +6,14 @@
 ###2.1 Regression Model Diagnostics
 
 Objectives:
-	* Use the TTest procedure to analyze the differences between two population means
-	* Verify the assumptions of a two-sample test
+* Use the TTest procedure to analyze the differences between two population means
+* Verify the assumptions of a two-sample test
 
 **Assumptions**
-	- Independednt observations
-	- Normally distributed data for each group
-	- Equal variances for each group
-	- (Can use large smaples instead of normally distributed observations due to central limit theorem)
+- Independednt observations
+- Normally distributed data for each group
+- Equal variances for each group
+- (Can use large smaples instead of normally distributed observations due to central limit theorem)
 
 
 
@@ -30,7 +30,7 @@ Test is valid **only** for independent samples from normal distributions. **Norm
 
 Note: If data is not normally distributed, you can look at plots to determine if equal variance.
 
-_(INPUT PICTURE FOR FOLDED F TEST FOR EQUALITY OF VARIANCES)_
+![alt text](https://github.com/agpierra/Class_Notes/blob/master/Pictures/Folded%20F%20Test%20for%20Equality%20of%20Variances.PNG)
 
 ####TTEST Procedure
 
