@@ -309,7 +309,6 @@ quit;
       Source                      DF     Type III SS     Mean Square    F Value    Pr > F
 
       Fertilizer                   3      0.00457996      0.00152665       1.96    0.1432
-
 ```
 
 
