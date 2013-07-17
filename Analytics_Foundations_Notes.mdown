@@ -283,9 +283,8 @@ quit;
  * `output` = specifies an output data set that contains all variables form the input data set and variables that represent statistics fromt he analysis
 
  ```
-  The GLM Procedure
 
-Dependent Variable: BulbWt
+                                    Dependent Variable: BulbWt
 
                                               Sum of
       Source                      DF         Squares     Mean Square    F Value    Pr > F
