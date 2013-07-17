@@ -1,0 +1,780 @@
+#Day 4
+
+##Chapter 2: Analysis of Variance(ANOVA)
+
+
+###2.1 Regression Model Diagnostics
+
+Objectives:
+	* Use the TTest procedure to analyze the differences between two population means
+	* Verify the assumptions of a two-sample test
+
+**Assumptions**
+	- Independednt observations
+	- Normally distributed data for each group
+	- Equal variances for each group
+	- (Can use large smaples instead of normally distributed observations due to central limit theorem)
+
+
+
+#### Folded F Test for Equality of Variances
+
+```
+H_o = sigma1^2 = sigma2^2
+H_a = sigma1^2 ~= sigma2^2
+
+F = max(s1^2, s2^2) / min(s1^2, s2^2)
+```
+The F value is calculated as a ratio of the greater of the two variances divided by the lesser of the two. F tends to be closer to 1.0 if the null hypothesis is true.
+Test is valid **only** for independent samples from normal distributions. **Normality is even required for large samples!**
+
+Note: If data is not normally distributed, you can look at plots to determine if equal variance.
+
+_(INPUT PICTURE FOR FOLDED F TEST FOR EQUALITY OF VARIANCES)_
+
+####TTEST Procedure
+
+```
+proc ttest data=_SAS-data-set_
+	class _variable_;
+	var _variables_;
+	Paired _variable1*variable2_;
+run;
+```
+
+Paired - specifies pairs of numeric response variables from which difference scores are calculated (variable1-variable2). A one-sample t test is then performed on the difference scores
+
+####Steps for t-Test for equal/unequal means
+
+1. Check the assumption of equal variances and then use the appropriate test for equal means
+2. If calculated F > F' then use the equal variance t-test line in the output to test whether the means of the two populations are equal (**Pooled**). Otherwise, use the unequal variance t-test (**Scatterthwaite**).
+
+**Before doing the appropriate test for equal means, you must do a test to see if the variances are equal.** 
+
+####Demo: Two-sample t-test
+
+```
+/*st102d01.sas*/
+proc ttest data=sasuser.TestScores plots(shownull)=interval;
+    class Gender;
+    var SATScore;
+    title "Two-Sample t-test Comparing Girls to Boys";
+run;
+```
+
+First you must verify assumptions of t-tests. Look at distribution of each gender to verify the normality of each group (looks fairly normal on page 2-9). 
+Q-Q plots also approximate to a normal distritibution, with one outlier - a male scoring 1600 when no other male scored greater than 1400.
+
+
+Result:
+```
+
+                                                        The TTEST Procedure
+ 
+                                                        Variable:  SATScore
+
+                           Gender          N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+                           Female         40      1221.0       157.4     24.8864       910.0      1590.0
+                           Male           40      1160.3       130.9     20.7008       890.0      1600.0
+                           Diff (1-2)            60.7500       144.8     32.3706                        
+
+                   Gender        Method               Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+                   Female                           1221.0      1170.7   1271.3       157.4       128.9    202.1
+                   Male                             1160.3      1118.4   1202.1       130.9       107.2    168.1
+                   Diff (1-2)    Pooled            60.7500     -3.6950    125.2       144.8       125.2    171.7
+                   Diff (1-2)    Satterthwaite     60.7500     -3.7286    125.2                                 
+
+                                    Method           Variances        DF    t Value    Pr > |t|
+
+                                    Pooled           Equal            78       1.88      0.0643
+                                    Satterthwaite    Unequal      75.497       1.88      0.0644
+
+                                                       Equality of Variances
+ 
+                                         Method      Num DF    Den DF    F Value    Pr > F
+
+                                         Folded F        39        39       1.45    0.2545
+```
+1. Examine descriptive statistics for each group and their differences
+2. Look at the Equality of Variances table. F test has a p-value of 0.2545 > 0.05. Therefore, do NOT reject the null hypothesis of equal variances. We continue as if the variances are equal.
+3. Look at the T-Test table for the hypothesis for equal means. Use the equal variance (pooled) t-test.
+	* Do not reject null hypothesis that the group means are equal P-value = 0.0643 > 0.05 . 
+	* There is no significant difference in average SAT score between boys and girls
+	* Note: you can also use confidence intervals. (-3.6950, 125.2) includes 0 (95% confidence interval)
+
+
+### 2.2 One-Way ANOVA
+
+_(INSERT PICTURE OF OVERVIEW OF STATISTICAL MODELS)_
+
+**Predictor** = Categorical  **Response** = Continuous    ->   Use **One-Way ANOVA**
+
+Analysis of variance is a statistical technique used to compare the means of two or more groups of observations or treatments.
+
+*Examples of one-way anova*: 
+	- Do accountants, on average, earn more than teachers?
+	- Do people treated with one of two new drugs have higher average T-cell counts than people in the control group?
+	- Do people spend different amounts of depending on which type of credit card they have?
+
+
+When tehre are three or more levels for the grouping variable, you can run a series of t tests between all the pairs of levels. However, a more powerful approach is to analyze all the data simultaneously (_one-way analysis of variance_). In this case, **the test statistic is the F ratio** rather than the Student's t value.
+
+
+####Garlic Ranch Example
+	- Does the type of fertilizer used affect the average weight of garlic grown at the Montana Gourmet Garlic Ranch?
+
+Variables in the data set:
+	- `Fertilizer`: Type of fertilizer used (1 through 4) where 3 are organic, and one is a chemical fertilizer (as control)
+	- `BulbWt`: Average garlic bulb weight (in pounds) in the bed
+	- `Cloves`: The average number of cloves on each bulb
+	- `BedID`: randomly assigned bed identification number
+
+Printing the data in the sasuse.MGGarlic dataset and create descriptive statistics:
+
+```
+/*st102d02.sas*/  /*Part A*/
+proc print data=sasuser.MGGarlic (obs=10);
+   title 'Partial Listing of Garlic Data';
+run;
+```
+
+Data shown below:
+```
+                                      The MEANS Procedure
+
+                                  Analysis Variable : BulbWt
+
+             N
+           Obs     N            Mean         Std Dev         Minimum         Maximum
+           ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+            32    32           0.219           0.029           0.152           0.278
+           ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+
+
+                                  Analysis Variable : BulbWt
+
+                     N
+     Fertilizer    Obs     N            Mean         Std Dev         Minimum         Maximum
+   ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+              1      9     9           0.225           0.025           0.188           0.254
+
+              2      8     8           0.209           0.026           0.159           0.241
+
+              3     11    11           0.230           0.026           0.189           0.278
+
+              4      4     4           0.196           0.041           0.152           0.248
+   ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+```
+
+Look at fertilizer groups separately:
+```
+/*st102d02.sas*/  /*Part B*/
+proc means data=sasuser.MGGarlic printalltypes maxdec=3;
+    var BulbWt;
+    class Fertilizer;
+    title 'Descriptive Statistics of Garlic Weight';
+run;
+
+/*st102d02.sas*/  /*Part C*/
+proc sgplot data=sasuser.MGGarlic;
+    vbox BulbWt / category=Fertilizer datalabel=BedID;
+    format BedID 5.;
+    title "Box and Whisker Plots of Garlic Weight";
+run;
+
+```
+
+`PRINTALLTYPES` displays all requested combinations of class variables (all TYPE vaalues) in the printed or displayed output
+`Class *variables*` specifies the variables whose values define the subgroup combinations for the analysis. Do not need to sort the data by class variables
+`Category =` produces separate box plots for each level of the variable listed
+
+In this demo, the design is not balanced. The groups are not equally sized (look at N Obs in the Means procedure).
+
+(_INSERT ANOVA NULL ALTERNATIVE HYPOTHESIS PICTURE_)
+
+
+####Partitioning Variability in ANOVA
+
+In ANOVA, Total Variation (measured by the corrected total sum of squares) is partitioned into two components:
+	1. The Between Group Variation (Model Sum of Squares)
+		* Variability explained by the independent variable and therefore represented by the between treatment sum of squares. Calculated as the weighted (by group size) sum of the squared differences between the mean for each group and the overall mean. (SS_M) (_Insert formula pic_)
+	2. The Within Group variation (Error Sum of Squares)
+		* Variability not explained by the model. Also referred to as _within treatement variability or residual sum of squares_. It is calculated as the sum of the squared differences between each observed value and the mean for its group. (SS_E) (_Insert formula pic_)
+
+ANOVA breaks apart the variance of the dependent variable to determine whether the between-group variation is a significant portion of the total variation.
+
+The test statistic (F Ratio) is only a ratio of the model variance to the error variance.
+
+Overall variability in the response variable is calculated as the sum of the squared differences between each observed value and the overall mean. (SS_T)
+
+**SS_T = SS_M + SS_E**
+
+The amount of variability in the response that the model explains is given by: (SS_M / SS_T)*100%
+
+The basic measures of variation under the two hypotheses are transformed into a ratio of the model and the error variances that has a known distribution (sample statistic, F ratio) under the null hypothesis that all group means are equal. The F ratio can be used to compute a p-value.
+
+####F Statistic and Critical Values
+
+F = MSM/MSE = SS_M/df_m  / SS_E/df_e
+
+**Model DF** = Number of treatments minus 1
+**Corrected total DF** = sample size - 1
+**Error DF** = the sample size minus the number of treatments (differenceb etween total DF and model DF)
+
+Mean squares are calculated by taking the sums of squares and difiding by the corresponding degrees of freedom. They can be thought of as variances.
+	- MSE is an estimate of sigma^2, the constant variance assumed for all treatments
+	- If mu_i = mu_j for all i ~= j, then the mean square for the model (MSM) is also an estimate of sigma^2
+	- If mu_i ~= mu_j then MSM estimates sigma^2 plus a positive constant
+	- The p-value for the test is calculated from the F distribution with appropriate degrees of freedom 
+		-(numerator = df_m, denominator = df_e)
+
+
+R^2 = SS_M / SS_T
+
+	- Coefficient of determination is a measure of the proportion of variability explained
+
+####The ANOVA Model
+
+	BulbWT = Base Level + Fertilizer + Unaccounted for Variation
+
+	(_INSERT PICTURE FERTILIZER EQUATION_)
+ 
+ Variables
+ 	- `Y_ik` = the kth value of the response variable for the ith treatment
+ 	- `mu` = the overall population mean of the response
+ 	- `tau_i` = the difference between the population mean of the ith treatment and the overall mean, mu. This is referred to as the *effect* of treatment i
+ 	- `epsilon_ik` = the difference between the observed value of the kth observation in the ith group and the mean of the ith group (error term)
+
+
+ ####proc GLM
+
+ Uses a parameterization of categorical variables in its `Class` statement that will not directly estimate the values of the parameters in the model shown. The correct parameter estimates can be obtained by adding the `solution` option in the `model` statment in `proc glm` and then using simple algebra.
+ Parameter estimates and standard errors can also be obtained using the `estimate` statments.
+
+ Fixed effect - researchers are only interested in four specific fertilizers
+ Random effect - If the fertilizers used were a sample of many that can be used, the sampling variability of fertilizers would need to be taken into account in the model.
+
+ Code for proc glm:
+
+ ```
+/*st102d03.sas*/  /*Part A*/
+proc glm data=sasuser.MGGarlic;
+     class Fertilizer;
+     model BulbWt=Fertilizer;
+     title 'Testing for Equality of Means with PROC GLM';
+run;
+quit;
+
+
+ ```
+
+ `Class` = specifies classification variables for analysis
+ `Model` = specifies dependent and independent variables for analysis
+ `Means` = computes unadjusted means of the dependent variable for each value of the speicified effect
+ `LSMeans` = produces adjusted means for the outcome variable, broken out by the variable specified and adjusting for any other exlanatory variables included in the `model` statment
+ `output` = specifies an output data set that contains all variables form the input data set and variables that represent statistics fromt he analysis
+
+ ```
+  The GLM Procedure
+
+Dependent Variable: BulbWt
+
+                                              Sum of
+      Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+      Model                        3      0.00457996      0.00152665       1.96    0.1432
+
+      Error                       28      0.02183054      0.00077966
+
+      Corrected Total             31      0.02641050
+
+
+                      R-Square     Coeff Var      Root MSE    BulbWt Mean
+
+                      0.173414      12.74520      0.027922       0.219082
+
+
+      Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+      Fertilizer                   3      0.00457996      0.00152665       1.96    0.1432
+
+
+      Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+      Fertilizer                   3      0.00457996      0.00152665       1.96    0.1432
+
+                          Testing for Equality of Means with PROC GLM                         5
+
+ ```
+
+Output divided into 3 parts
+	- The analysis of variance table
+	- Descriptive information
+	- Information about the effect of the independent variable in the model
+
+
+The F statistic and corresponding p-value are reported in the Analysis of Variance table. p-value (0.1432) > 0.05 and therefore, you do not reject the null hypothesis of no difference between the means.
+
+The `BulbWt` Mean is the mean of all the data values in the variable `BulbWt` without regard to `Fertilizer`
+
+For a one-way anova (only one classification variable) the informationa bout the independent variable in the model is an exact duplicate of the model line of the  anova table.
+
+Default plot created is a box plot. *To check validity of Anova model, look at the diagnostic plots*. Code is below to do this:
+
+ ```
+/*st102d03.sas*/  /*Part B*/
+proc glm data=sasuser.MGGarlic plots(only)=diagnostics;
+     class Fertilizer;
+     model BulbWt=Fertilizer;
+     means Fertilizer / hovtest;
+     title 'Testing for Equality of Means with PROC GLM';
+run;
+quit;
+
+ ```
+
+ Selected means statement option:
+
+ `Hovtest` performs Levene's test for homogeneity (equality) of variances. The null hypothesis is that variances are equal (Levene's is default test)
+
+ `Diagnostics` produces a panel display of diagnostic plots for linear models.
+
+ #####Diagnotstic plots
+
+ Plot in upper left shows residuals vs fitted values from ANOVA model. Any patterns or trends in this plot indicates model misspecification
+
+ Residual histogram and Q-Q plot at bottom left and middle left respectively test for normality assumption
+ 	- Histogram has no unique peak and has short tales, but is approximately symmetric
+ 	- Data values in Q-Q stay close to diagonal reference line. Strong support to assumption of normality distrbuted errors
+ 	- You can look at the following table to check the assumptions of equal variances (output of hovtest option):
+
+```
+	             Levene's Test for Homogeneity of BulbWt Variance
+                         ANOVA of Squared Deviations from Group Means
+
+                                         Sum of        Mean
+               Source            DF     Squares      Square    F Value    Pr > F
+
+               Fertilizer         3    1.716E-6    5.719E-7       0.98    0.4173
+               Error             28    0.000016    5.849E-7
+```
+Null hypothesis is that variances are equal over all the `fertilizer` groups. p-value 0.4173 > 0.05 and therefore you *do not* reject the jull hypothesis.
+
+If variances were not equal, you could add the `welch` option to the `means` statement. 
+
+
+####SUMMARY
+
+Null Hypothesis: All means are equal
+Alternative hypothesis: At least one mean is different
+
+1. Produce descriptive statistics
+2. Verify assumptions
+	- Independence
+	- Errors are normally distributed
+	- Error variances are equal for all groups
+3. Examine the p-value in the ANOVA table. If the p-value is less than alpha, reject the null hypothesis
+
+
+### 2.3 ANOVA with Data from a Randomized Block Design
+
+Objectives
+	- Recognize the difference between a completely randomized design aand a randomized block design
+	- differentiate between observed data and designed experiments
+	- Use the GLM procedure to analyze data from a randomized block design
+
+Observational or Retrospective Studies
+	- Groups can be naturally occuring (gender ethnicity)
+	- Random assignment might be unethical or untenable (smoking or credit risk groups)
+	- Often you look at what already happened instead of following through to the future
+	- you have little control over other factors contributing to the outcome measure
+
+
+Bulb weight = Fertilizer + Nuisance Factors + Random Variable
+$\gamma_{ijk} = \mu + \alpha_i + \tau_j + \epsilon_{ijk}$
+
+where Nuisance factors could be sun exposure, ph of the soil, rain
+
+Before blocking, the variation due to the nuisance factors is contained within the sum of square errors
+
+Because sector is included in the anova model, any effect caused by the nuisance factors that are common within a sector are accounted for in the Model Sum of Squares and not the Error Sum of Squares. Removing significant effects fromt he Error Sum of squares tends to give more power to the test of the effect of interest. This is because MSE, the denominator of the F statistic, tends to be reduced.
+
+####Including a Blocking Variable in the Model
+
+Additional assumptions are as follows:
+	- Treatments are randomly assigned within each block.
+	- The effects of the tratment factor are constant across the levels of the blocking variable
+
+When the effects of the treatment factor are not constant across the levels of the other variable, then this condition is called **interaction**.
+
+####Anova with Blocking in SAS
+
+```
+/*st102d04.sas*/
+proc glm data=sasuser.MGGarlic_Block plots(only)=diagnostics;
+     class Fertilizer Sector;
+     model BulbWt=Fertilizer Sector;
+     title 'ANOVA for Randomized Block Design';
+run;
+quit;
+```
+
+The blocking variable must be in the model and it must be listed in the class statement.
+
+Output:
+```
+									Dependent Variable: BulbWt
+
+                                              Sum of
+      Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+      Model                       10      0.02307263      0.00230726       5.86    0.0003
+
+      Error                       21      0.00826745      0.00039369
+
+      Corrected Total             31      0.03134008
+
+
+                      R-Square     Coeff Var      Root MSE    BulbWt Mean
+
+                      0.736202      9.085064      0.019842       0.218398
+
+
+      Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+      Fertilizer                   3      0.00508630      0.00169543       4.31    0.0162
+      Sector                       7      0.01798632      0.00256947       6.53    0.0004
+
+
+      Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+      Fertilizer                   3      0.00508630      0.00169543       4.31    0.0162
+      Sector                       7      0.01798632      0.00256947       6.53    0.0004
+```
+
+
+The overall test p-value = 0.0003 indicates that there are significant differences between the means of the garlic bulb weights across fertilizers or blocks (sectors). However, because there is more than one term in the model, you *cannot* tell whether the differences are due to differences among the fertilizers or differences across sectors.
+
+Because our P-value for fertilizer is 0.0162, there is a difference between fertilizers
+Because the p-value in our sector is 0.0004, there is a difference between each of the blocks, and therefore blocking was required.
+
+Because we chose 4 specific fertilizers, we can only make inferences on those 4 specific fertilizers (fixed-effects model)
+
+**Diagnostics:**
+	- Good random scatter of residuals
+	- Decent looking Q-Q test
+
+Now we want to know which pairs of fertilizers are garlic bulb weights different form one another?
+
+
+###2.4 ANOVA Post Hoc Tests
+
+Objectives
+*Perform pairwise comparisons among groups after finding a significant effect of an independent variable in ANOVA
+* Demonstrate graphical features in proc GLM for performing post hoc tests
+* Interpret a diffogram
+* Interpret a control plot
+
+When we control the **comparisonwise error rate** (CER), we fix the level of alpha for a single comparison, without taking into consideration all the pairwise comparisons we are making.
+
+The **experimentwise error rate** (EER) uses an alpha that takes into consideration all the pariwise comparisons that you are making. Chance that you falsely conclude that at least one difference exists is much higher when you consider all possible comparisons.
+
+Control Comparisonwise Error Rate -> Pairwise t-tests
+Control Experimentwise Error Rate -> Compair all pairs tukey, compare to controll dunnett
+
+All of the multiple comparison methods are requested with options in the `LSMEANS` statment of `proc glm`
+
+**Comparison Control** :  `lsmeans / pdiff=all adjust=t`
+**Experimentwise Control  :  `lsmeans / pdiff=all adjust=tukey` or 
+							`pdiff=control('control level') adjust=dunnett`
+
+Tukey's multiple comparison method:
+*appropriate when you consider pairwise comparisons only
+* The experimentwise error rate is
+	*equal to alpha when all pairwise comparisons are considered
+	*less than alpha when fewer than all pairwise comparisons are considered
+
+**Use a diffogram to tell whether two group means are statistically significant**
+
+(_INSERT PICTURE OF DIFFOGRAM_)
+
+
+####Special case of comparing to a control
+Comparing to a control is appropriate when there is a natural reference group (ie placebo in a drug trial)
+
+This is an example of the dunnet method
+
+(_INSERT PICTURE OF CONTROL PLOT_)
+
+If confidence interval is in shaded region, then they are not statistically different.
+
+####Post Hoc Pairwise Comparisons in SAS
+
+```
+/*st102d05.sas*/
+proc glm data=sasuser.MGGarlic_Block 
+         plots(only)=(controlplot diffplot(center));
+    class Fertilizer Sector;
+    model BulbWt=Fertilizer Sector;
+    lsmeans Fertilizer / pdiff=all adjust=tukey;
+    lsmeans Fertilizer / pdiff=control('4') adjust=dunnett;
+    lsmeans Fertilizer / pdiff=all adjust=t;
+    title 'Garlic Data: Multiple Comparisons';
+run;
+quit;
+
+```
+`plot=` options:
+
+`controlplot` = requests display in which least squares means are compared against a reference level. LS mean control plots only produced when you specify `pdiff=control` or `adjust=dunnett` in lsmeans statement
+
+`diffplot` = modifies diffogram produced by lsmeans statement with the `pdiff=all` option. `center` marks center point for each comparison.
+
+`lsmeans` options:
+
+`pdiff=` = requests p-values for differences, which is the probability of seeing a difference between two means that is as large as the observed means or larger if the two populations means are actually the same.
+
+`adjust=` specifies the adjustment method for multiple comparisons.
+* `T` asks that no adjustment made for multiple comparisons
+* `Tukey` uses Tukey
+* `Dunnet` uses dunnet
+
+Results below show p-values the diffogram represents:
+
+```
+                                      Least Squares Means
+
+                                                BulbWt      LSMEAN
+                            Fertilizer          LSMEAN      Number
+
+                            1               0.23625000           1
+                            2               0.21115125           2
+                            3               0.22330125           3
+                            4               0.20288875           4
+
+
+                          Least Squares Means for effect Fertilizer
+                             Pr > |t| for H0: LSMean(i)=LSMean(j)
+
+                                  Dependent Variable: BulbWt
+
+                 i/j              1             2             3             4
+
+                    1                      0.0195        0.2059        0.0029
+                    2        0.0195                      0.2342        0.4143
+                    3        0.2059        0.2342                      0.0523
+                    4        0.0029        0.4143        0.0523
+
+
+NOTE: To ensure overall protection level, only probabilities associated with pre-planned
+      comparisons should be used.
+```
+
+By Tukey test, 1 and 4 are different.
+By Dunnett, 1 and 4 are different
+By T test, 1 and 4 are different and 2 and 1 are different (NOT TRUE DONT USE THIS TEST)
+
+
+### 2.5 Two-Way ANOVA with Interactions
+
+Objectives
+* Fit a two-way ANOVA model
+* Detect interactions between factors
+* Analyze the treatments when there is a significant interaction
+
+N-way ANOVA
+
+(_INSERT NWAY ANOVA PICTURE_)
+
+Drug example: The purpose of the study is to look at the effect of a new prescription drug on blood pressure
+
+`DrugDose` dosage level of drug (1, 2, 3, 4) corresponding to (Placebo, 50mg, 100mg, 200mg)
+`Disease` heart disease category
+`BloodP` change in diastolic blood pressure after 2 weeks treatment
+
+(_INSERT BLOODP MODEL PICTURE_)
+
+An interaction occurs when the differences between group means on one variable change at different levels of another variable.
+
+If an interaction exists between any factors, the tests for the individual factor effects might be misleading, deo to masking of the effects by the interaction. This is especially true for unbalanced data.
+
+If the lines of an interaction graph are parallel, we can say that there is no interaction between variables.
+
+Analyze the main effects with the interaction in the model:
+
+$\Gamma_{ijk} = \mu + \alpha_i + \Beta_j + (\alpha\beta)_{ij} + \epsilon_{ijk}$
+
+or delete the interaction from the model and then analyze the main effects:
+
+$\Gamma_{ijk} = \mu + \alpha_i + \Beta_j + \epsilon_{ijk}$
+
+#### Two-Way ANOVA with Interactions in SAS
+
+```
+/*st102d06.sas*/  /*Part A*/
+proc print data=sasuser.drug(obs=10);
+    title 'Partial Listing of Drug Data Set';
+run;
+
+/*st102d06.sas*/  /*Part B*/
+proc format;
+    value dosefmt 1='Placebo'
+                  2='50 mg'
+                  3='100 mg'
+                  4='200 mg';
+run;
+
+proc means data=sasuser.drug
+           mean var std nway;
+    class Disease DrugDose;
+    var BloodP;
+  format DrugDose dosefmt.;
+    output out=means mean=BloodP_Mean;
+    title 'Selected Descriptive Statistics for Drug Data Set';
+run;
+```
+
+`nway` = when you include `class` variables, `nway` specifies that the output data set contains only statistics for the observations with the hightest type and way values.
+
+Results:
+
+```
+
+                                  Analysis Variable : BloodP
+
+                      Drug         N
+           Disease    Dose       Obs            Mean        Variance         Std Dev
+           ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+           A          Placebo     12       1.3333333     183.1515152      13.5333483
+
+                      50 mg       16      -9.6875000     356.7625000      18.8881577
+
+                      100 mg      13     -26.2307692     329.0256410      18.1390640
+
+                      200 mg      18     -22.5555556     445.0849673      21.0970369
+
+           B          Placebo     15      -8.1333333     285.9809524      16.9109714
+
+                      50 mg       15       5.4000000     479.1142857      21.8886794
+
+                      100 mg      14      24.7857143     563.7197802      23.7427838
+
+                      200 mg      13      23.2307692     556.3589744      23.5872630
+
+           C          Placebo     14       0.4285714     411.8021978      20.2929100
+
+                      50 mg       13      -4.8461538     577.6410256      24.0341637
+
+                      100 mg      14      -5.1428571     195.5164835      13.9827209
+
+                      200 mg      13       1.3076923     828.5641026      28.7847894
+           ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+
+```
+
+
+
+Let's plot it!
+
+```
+/*st102d06.sas*/  /*Part C*/
+proc sgplot data=means;
+    series x=DrugDose y=BloodP_Mean / group=Disease markers;
+    xaxis integer;
+    title 'Plot of Stratified Means in Drug Data Set';
+  format DrugDose dosefmt.;
+run;
+```
+
+`series` statement creates a line plot
+`markers` adds data point markers to the series plot data points
+`xaxis integer` forces the x-axis to have tick marks only at integer values
+
+
+
+/*st102d06.sas*/  /*Part D*/
+proc glm data=sasuser.drug order=internal;
+    class DrugDose Disease;
+    model Bloodp=DrugDose Disease DrugDose*Disease;
+    title 'Analyze the Effects of DrugDose and Disease';
+    title2 'Including Interaction';
+  format DrugDose dosefmt.;
+run;
+quit;
+
+results:
+
+```
+
+Dependent Variable: BloodP
+
+                                              Sum of
+      Source                      DF         Squares     Mean Square    F Value    Pr > F
+
+      Model                       11      36476.8353       3316.0759       7.66    <.0001
+
+      Error                      158      68366.4589        432.6991
+
+      Corrected Total            169     104843.2941
+
+
+                      R-Square     Coeff Var      Root MSE    BloodP Mean
+
+                      0.347918     -906.7286      20.80142      -2.294118
+
+
+      Source                      DF       Type I SS     Mean Square    F Value    Pr > F
+
+      DrugDose                     3        54.03137        18.01046       0.04    0.9886
+      Disease                      2     19276.48690      9638.24345      22.27    <.0001
+      DrugDose*Disease             6     17146.31698      2857.71950       6.60    <.0001
+
+
+      Source                      DF     Type III SS     Mean Square    F Value    Pr > F
+
+      DrugDose                     3       335.73526       111.91175       0.26    0.8551
+      Disease                      2     18742.62386      9371.31193      21.66    <.0001
+      DrugDose*Disease             6     17146.31698      2857.71950       6.60    <.0001
+
+```
+
+Although the P-value for drug dose is high (almost 1), it does not mean that there is no effect in drug dose. If there is an interaction between drug dose and disease, we have to keep our main effect.
+Looking on the graph, you can see that the drug dose relationship for disease A and disease B 'cancel each other out'
+
+
+
+```
+/*st102d06.sas*/  /*Part E*/
+ods graphics off;
+ods select LSMeans SlicedANOVA;
+proc glm data=sasuser.drug order=internal;
+    class DrugDose Disease;
+    model Bloodp=DrugDose Disease DrugDose*Disease;
+    lsmeans DrugDose*Disease / slice=Disease;
+    title 'Analyze the Effects of DrugDose';
+    title2 'at Each Level of Disease';
+  format DrugDose dosefmt.;
+run;
+quit;
+
+ods graphics on;
+
+```
+
+Results for lsmeans:
+
+```
+ DrugDose*Disease Effect Sliced by Disease for BloodP
+
+                                       Sum of
+            Disease        DF         Squares     Mean Square    F Value    Pr > F
+
+            A               3     6320.126747     2106.708916       4.87    0.0029
+            B               3           10561     3520.222833       8.14    <.0001
+            C               3      468.099308      156.033103       0.36    0.7815
+
+```
+
+Taking disease x, puts it in its own data set, and run an anova against drug dose
