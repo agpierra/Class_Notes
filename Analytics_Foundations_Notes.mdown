@@ -20,8 +20,8 @@ Objectives:
 #### Folded F Test for Equality of Variances
 
 ```
-H_o = sigma1^2 = sigma2^2
-H_a = sigma1^2 ~= sigma2^2
+H_o : sigma1^2 = sigma2^2
+H_a : sigma1^2 ~= sigma2^2
 
 F = max(s1^2, s2^2) / min(s1^2, s2^2)
 ```
@@ -47,7 +47,7 @@ Paired - specifies pairs of numeric response variables from which difference sco
 ####Steps for t-Test for equal/unequal means
 
 1. Check the assumption of equal variances and then use the appropriate test for equal means
-2. If calculated F > F' then use the equal variance t-test line in the output to test whether the means of the two populations are equal (**Pooled**). Otherwise, use the unequal variance t-test (**Scatterthwaite**).
+2. If calculated F > F' then use the equal variance t-test line in the output to test whether the means of the two populations are equal **(Pooled)**. Otherwise, use the unequal variance t-test **(Scatterthwaite)**.
 
 **Before doing the appropriate test for equal means, you must do a test to see if the variances are equal.** 
 
@@ -109,27 +109,29 @@ Result:
 
 ![alt text](Pictures/Overview_of_statistical_models.png)
 
-**Predictor** = Categorical  **Response** = Continuous    ->   Use **One-Way ANOVA**
+**Predictor** = Categorical 
+**Response** = Continuous    ->   Use **One-Way ANOVA**
 
 Analysis of variance is a statistical technique used to compare the means of two or more groups of observations or treatments.
 
 *Examples of one-way anova*: 
-	- Do accountants, on average, earn more than teachers?
-	- Do people treated with one of two new drugs have higher average T-cell counts than people in the control group?
-	- Do people spend different amounts of depending on which type of credit card they have?
+- Do accountants, on average, earn more than teachers?
+- Do people treated with one of two new drugs have higher average T-cell counts than people in the control group?
+- Do people spend different amounts of depending on which type of credit card they have?
 
 
-When tehre are three or more levels for the grouping variable, you can run a series of t tests between all the pairs of levels. However, a more powerful approach is to analyze all the data simultaneously (_one-way analysis of variance_). In this case, **the test statistic is the F ratio** rather than the Student's t value.
+When there are three or more levels for the grouping variable, you can run a series of t tests between all the pairs of levels. However, a more powerful approach is to analyze all the data simultaneously _(one-way analysis of variance)_. In this case, **the test statistic is the F ratio** rather than the Student's t value.
 
 
 ####Garlic Ranch Example
-	- Does the type of fertilizer used affect the average weight of garlic grown at the Montana Gourmet Garlic Ranch?
+
+-Does the type of fertilizer used affect the average weight of garlic grown at the Montana Gourmet Garlic Ranch?
 
 Variables in the data set:
-	- `Fertilizer`: Type of fertilizer used (1 through 4) where 3 are organic, and one is a chemical fertilizer (as control)
-	- `BulbWt`: Average garlic bulb weight (in pounds) in the bed
-	- `Cloves`: The average number of cloves on each bulb
-	- `BedID`: randomly assigned bed identification number
+* `Fertilizer`: Type of fertilizer used (1 through 4) where 3 are organic, and one is a chemical fertilizer (as control)
+* `BulbWt`: Average garlic bulb weight (in pounds) in the bed
+* `Cloves`: The average number of cloves on each bulb
+* `BedID`: randomly assigned bed identification number
 
 Printing the data in the sasuse.MGGarlic dataset and create descriptive statistics:
 
@@ -186,8 +188,10 @@ run;
 
 ```
 
-`PRINTALLTYPES` displays all requested combinations of class variables (all TYPE vaalues) in the printed or displayed output
-`Class *variables*` specifies the variables whose values define the subgroup combinations for the analysis. Do not need to sort the data by class variables
+`PRINTALLTYPES` displays all requested combinations of class variables (all TYPE vaalues) in the printed or displayed output.
+
+`Class *variables*` specifies the variables whose values define the subgroup combinations for the analysis. Do not need to sort the data by class variables.
+
 `Category =` produces separate box plots for each level of the variable listed
 
 In this demo, the design is not balanced. The groups are not equally sized (look at N Obs in the Means procedure).
@@ -198,10 +202,10 @@ In this demo, the design is not balanced. The groups are not equally sized (look
 ####Partitioning Variability in ANOVA
 
 In ANOVA, Total Variation (measured by the corrected total sum of squares) is partitioned into two components:
-	1. The Between Group Variation (Model Sum of Squares)
-		* Variability explained by the independent variable and therefore represented by the between treatment sum of squares. Calculated as the weighted (by group size) sum of the squared differences between the mean for each group and the overall mean. (SS_M) ![alt text](Pictures/Between_Group_Variation.png)
-	2. The Within Group variation (Error Sum of Squares)
-		* Variability not explained by the model. Also referred to as _within treatement variability or residual sum of squares_. It is calculated as the sum of the squared differences between each observed value and the mean for its group. (SS_E) ![alt text](Pictures/Within_Goup_Variation.png)
+1. The Between Group Variation (Model Sum of Squares)
+	* Variability explained by the independent variable and therefore represented by the between treatment sum of squares. Calculated as the weighted (by group size) sum of the squared differences between the mean for each group and the overall mean. (SS_M) ![alt text](Pictures/Between_Group_Variation.png)
+2. The Within Group variation (Error Sum of Squares)
+	* Variability not explained by the model. Also referred to as _within treatement variability or residual sum of squares_. It is calculated as the sum of the squared differences between each observed value and the mean for its group. (SS_E) ![alt text](Pictures/Within_Group_Variation.png)
 
 ANOVA breaks apart the variance of the dependent variable to determine whether the between-group variation is a significant portion of the total variation.
 
@@ -219,36 +223,37 @@ The basic measures of variation under the two hypotheses are transformed into a 
 
 F = MSM/MSE = SS_M/df_m  / SS_E/df_e
 
-**Model DF** = Number of treatments minus 1
-**Corrected total DF** = sample size - 1
-**Error DF** = the sample size minus the number of treatments (differenceb etween total DF and model DF)
+- **Model DF** = Number of treatments minus 1
 
-Mean squares are calculated by taking the sums of squares and difiding by the corresponding degrees of freedom. They can be thought of as variances.
-	- MSE is an estimate of sigma^2, the constant variance assumed for all treatments
-	- If mu_i = mu_j for all i ~= j, then the mean square for the model (MSM) is also an estimate of sigma^2
-	- If mu_i ~= mu_j then MSM estimates sigma^2 plus a positive constant
-	- The p-value for the test is calculated from the F distribution with appropriate degrees of freedom 
-		-(numerator = df_m, denominator = df_e)
+- **Corrected total DF** = sample size - 1
+
+- **Error DF** = the sample size minus the number of treatments (differenceb etween total DF and model DF)
+
+Mean squares are calculated by taking the sums of squares and dividing by the corresponding degrees of freedom. They can be thought of as variances.
+- MSE is an estimate of sigma^2, the constant variance assumed for all treatments
+- If mu_i = mu_j for all i ~= j, then the mean square for the model (MSM) is also an estimate of sigma^2
+- If mu_i ~= mu_j then MSM estimates sigma^2 plus a positive constant
+- The p-value for the test is calculated from the F distribution with appropriate degrees of freedom 
+	-(numerator = df_m, denominator = df_e)
 
 
 R^2 = SS_M / SS_T
 
-	- Coefficient of determination is a measure of the proportion of variability explained
+- Coefficient of determination is a measure of the proportion of variability explained
+
 
 ####The ANOVA Model
 
-	BulbWT = Base Level + Fertilizer + Unaccounted for Variation
-
 ![alt text](Pictures/Fertilizer_Equation.png)
  
- Variables
- 	- `Y_ik` = the kth value of the response variable for the ith treatment
- 	- `mu` = the overall population mean of the response
- 	- `tau_i` = the difference between the population mean of the ith treatment and the overall mean, mu. This is referred to as the *effect* of treatment i
- 	- `epsilon_ik` = the difference between the observed value of the kth observation in the ith group and the mean of the ith group (error term)
+ Variables:
+ - `Y_ik` = the kth value of the response variable for the ith treatment
+ - `mu` = the overall population mean of the response
+ - `tau_i` = the difference between the population mean of the ith treatment and the overall mean, mu. This is referred to as the *effect* of treatment i
+ - `epsilon_ik` = the difference between the observed value of the kth observation in the ith group and the mean of the ith group (error term)
 
 
- ####proc GLM
+ #### Proc GLM
 
  Uses a parameterization of categorical variables in its `Class` statement that will not directly estimate the values of the parameters in the model shown. The correct parameter estimates can be obtained by adding the `solution` option in the `model` statment in `proc glm` and then using simple algebra.
  Parameter estimates and standard errors can also be obtained using the `estimate` statments.
@@ -256,7 +261,7 @@ R^2 = SS_M / SS_T
  Fixed effect - researchers are only interested in four specific fertilizers
  Random effect - If the fertilizers used were a sample of many that can be used, the sampling variability of fertilizers would need to be taken into account in the model.
 
- Code for proc glm:
+ ##### SAS code
 
  ```
 /*st102d03.sas*/  /*Part A*/
@@ -270,11 +275,11 @@ quit;
 
  ```
 
- `Class` = specifies classification variables for analysis
- `Model` = specifies dependent and independent variables for analysis
- `Means` = computes unadjusted means of the dependent variable for each value of the speicified effect
- `LSMeans` = produces adjusted means for the outcome variable, broken out by the variable specified and adjusting for any other exlanatory variables included in the `model` statment
- `output` = specifies an output data set that contains all variables form the input data set and variables that represent statistics fromt he analysis
+ * `Class` = specifies classification variables for analysis
+ * `Model` = specifies dependent and independent variables for analysis
+ * `Means` = computes unadjusted means of the dependent variable for each value of the speicified effect
+ * `LSMeans` = produces adjusted means for the outcome variable, broken out by the variable specified and adjusting for any other exlanatory variables included in the `model` statment
+ * `output` = specifies an output data set that contains all variables form the input data set and variables that represent statistics fromt he analysis
 
  ```
   The GLM Procedure
@@ -341,14 +346,14 @@ quit;
 
  `Diagnostics` produces a panel display of diagnostic plots for linear models.
 
- #####Diagnotstic plots
+ ##### Diagnotstic plots
 
  Plot in upper left shows residuals vs fitted values from ANOVA model. Any patterns or trends in this plot indicates model misspecification
 
  Residual histogram and Q-Q plot at bottom left and middle left respectively test for normality assumption
- 	- Histogram has no unique peak and has short tales, but is approximately symmetric
- 	- Data values in Q-Q stay close to diagonal reference line. Strong support to assumption of normality distrbuted errors
- 	- You can look at the following table to check the assumptions of equal variances (output of hovtest option):
+ - Histogram has no unique peak and has short tales, but is approximately symmetric
+ - Data values in Q-Q stay close to diagonal reference line. Strong support to assumption of normality distrbuted errors
+ - You can look at the following table to check the assumptions of equal variances (output of hovtest option):
 
 ```
 	             Levene's Test for Homogeneity of BulbWt Variance
@@ -380,19 +385,20 @@ Alternative hypothesis: At least one mean is different
 
 ### 2.3 ANOVA with Data from a Randomized Block Design
 
-Objectives
-	- Recognize the difference between a completely randomized design aand a randomized block design
-	- differentiate between observed data and designed experiments
-	- Use the GLM procedure to analyze data from a randomized block design
+**Objectives**
+- Recognize the difference between a completely randomized design aand a randomized block design
+- differentiate between observed data and designed experiments
+- Use the GLM procedure to analyze data from a randomized block design
 
-Observational or Retrospective Studies
-	- Groups can be naturally occuring (gender ethnicity)
-	- Random assignment might be unethical or untenable (smoking or credit risk groups)
-	- Often you look at what already happened instead of following through to the future
-	- you have little control over other factors contributing to the outcome measure
+**Observational or Retrospective Studies**
+- Groups can be naturally occuring (gender ethnicity)
+- Random assignment might be unethical or untenable (smoking or credit risk groups)
+- Often you look at what already happened instead of following through to the future
+- you have little control over other factors contributing to the outcome measure
 
 
 Bulb weight = Fertilizer + Nuisance Factors + Random Variable
+
 $\gamma_{ijk} = \mu + \alpha_i + \tau_j + \epsilon_{ijk}$
 
 where Nuisance factors could be sun exposure, ph of the soil, rain
@@ -404,8 +410,8 @@ Because sector is included in the anova model, any effect caused by the nuisance
 ####Including a Blocking Variable in the Model
 
 Additional assumptions are as follows:
-	- Treatments are randomly assigned within each block.
-	- The effects of the tratment factor are constant across the levels of the blocking variable
+- Treatments are randomly assigned within each block.
+- The effects of the tratment factor are constant across the levels of the blocking variable
 
 When the effects of the treatment factor are not constant across the levels of the other variable, then this condition is called **interaction**.
 
@@ -472,7 +478,7 @@ Now we want to know which pairs of fertilizers are garlic bulb weights different
 ###2.4 ANOVA Post Hoc Tests
 
 Objectives
-*Perform pairwise comparisons among groups after finding a significant effect of an independent variable in ANOVA
+* Perform pairwise comparisons among groups after finding a significant effect of an independent variable in ANOVA
 * Demonstrate graphical features in proc GLM for performing post hoc tests
 * Interpret a diffogram
 * Interpret a control plot
@@ -482,26 +488,28 @@ When we control the **comparisonwise error rate** (CER), we fix the level of alp
 The **experimentwise error rate** (EER) uses an alpha that takes into consideration all the pariwise comparisons that you are making. Chance that you falsely conclude that at least one difference exists is much higher when you consider all possible comparisons.
 
 Control Comparisonwise Error Rate -> Pairwise t-tests
-Control Experimentwise Error Rate -> Compair all pairs tukey, compare to controll dunnett
+
+Control Experimentwise Error Rate -> Compair all pairs tukey, compare to control dunnett
 
 All of the multiple comparison methods are requested with options in the `LSMEANS` statment of `proc glm`
 
 **Comparison Control** :  `lsmeans / pdiff=all adjust=t`
-**Experimentwise Control  :  `lsmeans / pdiff=all adjust=tukey` or 
+
+**Experimentwise Control**  :  `lsmeans / pdiff=all adjust=tukey` or 
 							`pdiff=control('control level') adjust=dunnett`
 
 Tukey's multiple comparison method:
-*appropriate when you consider pairwise comparisons only
+* Appropriate when you consider pairwise comparisons only
 * The experimentwise error rate is
-	*equal to alpha when all pairwise comparisons are considered
-	*less than alpha when fewer than all pairwise comparisons are considered
+	* Equal to alpha when all pairwise comparisons are considered
+	* Less than alpha when fewer than all pairwise comparisons are considered
 
 **Use a diffogram to tell whether two group means are statistically significant**
 
-![alt text](Pictures/Diffogram.png)
+![alt text](Pictures/Diffogram.PNG)
 
 
-####Special case of comparing to a control
+#### Special case of comparing to a control
 Comparing to a control is appropriate when there is a natural reference group (ie placebo in a drug trial)
 
 This is an example of the dunnet method
@@ -526,13 +534,13 @@ run;
 quit;
 
 ```
-`plot=` options:
+`plot=` **options**:
 
 `controlplot` = requests display in which least squares means are compared against a reference level. LS mean control plots only produced when you specify `pdiff=control` or `adjust=dunnett` in lsmeans statement
 
 `diffplot` = modifies diffogram produced by lsmeans statement with the `pdiff=all` option. `center` marks center point for each comparison.
 
-`lsmeans` options:
+`lsmeans` **options**:
 
 `pdiff=` = requests p-values for differences, which is the probability of seeing a difference between two means that is as large as the observed means or larger if the two populations means are actually the same.
 
@@ -591,7 +599,9 @@ N-way ANOVA
 Drug example: The purpose of the study is to look at the effect of a new prescription drug on blood pressure
 
 `DrugDose` dosage level of drug (1, 2, 3, 4) corresponding to (Placebo, 50mg, 100mg, 200mg)
+
 `Disease` heart disease category
+
 `BloodP` change in diastolic blood pressure after 2 weeks treatment
 
 ![alt text](Pictures/BloodP_Model.png)
@@ -689,11 +699,13 @@ run;
 ```
 
 `series` statement creates a line plot
+
 `markers` adds data point markers to the series plot data points
+
 `xaxis integer` forces the x-axis to have tick marks only at integer values
 
 
-
+```
 /*st102d06.sas*/  /*Part D*/
 proc glm data=sasuser.drug order=internal;
     class DrugDose Disease;
@@ -703,6 +715,7 @@ proc glm data=sasuser.drug order=internal;
   format DrugDose dosefmt.;
 run;
 quit;
+```
 
 results:
 
@@ -741,6 +754,7 @@ Dependent Variable: BloodP
 ```
 
 Although the P-value for drug dose is high (almost 1), it does not mean that there is no effect in drug dose. If there is an interaction between drug dose and disease, we have to keep our main effect.
+
 Looking on the graph, you can see that the drug dose relationship for disease A and disease B 'cancel each other out'
 
 
