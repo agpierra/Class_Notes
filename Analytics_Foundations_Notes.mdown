@@ -30,7 +30,7 @@ Test is valid **only** for independent samples from normal distributions. **Norm
 
 Note: If data is not normally distributed, you can look at plots to determine if equal variance.
 
-![alt text](Pictures/Folded%20F%20Test%20for%20Equality%20of%20Variances.PNG "Folded F Test for Equality of Variances")
+![alt text](Pictures/Folded_F_Test.png "Folded F Test for Equality of Variances")
 
 ####TTEST Procedure
 
@@ -107,7 +107,7 @@ Result:
 
 ### 2.2 One-Way ANOVA
 
-![alt text](pictures/overview_of_statistical_models.png)
+![alt text](Pictures/Overview_of_statistical_models.png)
 
 **Predictor** = Categorical  **Response** = Continuous    ->   Use **One-Way ANOVA**
 
@@ -192,22 +192,22 @@ run;
 
 In this demo, the design is not balanced. The groups are not equally sized (look at N Obs in the Means procedure).
 
-![alt text](pictures/anova_null_alternative_hypothesis.png)
+![alt text](Pictures/Anova_Null_Alternative_Hypothesis.png)
 
 
 ####Partitioning Variability in ANOVA
 
 In ANOVA, Total Variation (measured by the corrected total sum of squares) is partitioned into two components:
 	1. The Between Group Variation (Model Sum of Squares)
-		* Variability explained by the independent variable and therefore represented by the between treatment sum of squares. Calculated as the weighted (by group size) sum of the squared differences between the mean for each group and the overall mean. (SS_M) ![alt text](pictures/between_group_variation.png)
+		* Variability explained by the independent variable and therefore represented by the between treatment sum of squares. Calculated as the weighted (by group size) sum of the squared differences between the mean for each group and the overall mean. (SS_M) ![alt text](Pictures/Between_Group_Variation.png)
 	2. The Within Group variation (Error Sum of Squares)
-		* Variability not explained by the model. Also referred to as _within treatement variability or residual sum of squares_. It is calculated as the sum of the squared differences between each observed value and the mean for its group. (SS_E) ![alt text](pictures/within_group_variation.png)
+		* Variability not explained by the model. Also referred to as _within treatement variability or residual sum of squares_. It is calculated as the sum of the squared differences between each observed value and the mean for its group. (SS_E) ![alt text](Pictures/Within_Goup_Variation.png)
 
 ANOVA breaks apart the variance of the dependent variable to determine whether the between-group variation is a significant portion of the total variation.
 
 The test statistic (F Ratio) is only a ratio of the model variance to the error variance.
 
-Overall variability in the response variable is calculated as the sum of the squared differences between each observed value and the overall mean. (SS_T) ![alt text](pictures/Total_variation.png)
+Overall variability in the response variable is calculated as the sum of the squared differences between each observed value and the overall mean. (SS_T) ![alt text](Pictures/Total_Variation.png)
 
 **SS_T = SS_M + SS_E**
 
@@ -239,7 +239,7 @@ R^2 = SS_M / SS_T
 
 	BulbWT = Base Level + Fertilizer + Unaccounted for Variation
 
-![alt text](pictures/fertilizer_equation.png)
+![alt text](Pictures/Fertilizer_Equation.png)
  
  Variables
  	- `Y_ik` = the kth value of the response variable for the ith treatment
@@ -498,7 +498,7 @@ Tukey's multiple comparison method:
 
 **Use a diffogram to tell whether two group means are statistically significant**
 
-![alt text](pictures/diffogram.png)
+![alt text](Pictures/Diffogram.png)
 
 
 ####Special case of comparing to a control
@@ -506,7 +506,7 @@ Comparing to a control is appropriate when there is a natural reference group (i
 
 This is an example of the dunnet method
 
-![alt text](pictures/control_plot.png)
+![alt text](Pictures/Control_Plot.png)
 
 If confidence interval is in shaded region, then they are not statistically different.
 
@@ -586,7 +586,7 @@ Objectives
 
 N-way ANOVA
 
-![alt text](pictures/nway_anova.png)
+![alt text](Pictures/Nway_Anova.png)
 
 Drug example: The purpose of the study is to look at the effect of a new prescription drug on blood pressure
 
@@ -594,7 +594,7 @@ Drug example: The purpose of the study is to look at the effect of a new prescri
 `Disease` heart disease category
 `BloodP` change in diastolic blood pressure after 2 weeks treatment
 
-![alt text](pictures/bloodp_model.png)
+![alt text](Pictures/BloodP_Model.png)
 
 An interaction occurs when the differences between group means on one variable change at different levels of another variable.
 
