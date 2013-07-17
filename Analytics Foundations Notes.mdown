@@ -30,7 +30,7 @@ Test is valid **only** for independent samples from normal distributions. **Norm
 
 Note: If data is not normally distributed, you can look at plots to determine if equal variance.
 
-![alt text](https://github.com/agpierra/Class_Notes/blob/master/Pictures/Folded%20F%20Test%20for%20Equality%20of%20Variances.PNG)
+![alt text](https://github.com/agpierra/Class_Notes/Pictures/Folded%20F%20Test%20for%20Equality%20of%20Variances.PNG "Folded F Test for Equality of Variances")
 
 ####TTEST Procedure
 
