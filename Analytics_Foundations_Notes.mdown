@@ -975,7 +975,7 @@ Odds ratio indicates how much more likely, **with respect to odds**, a certain e
 
 **Odds ratio** is the ratio of odds, as seen below:
 
-![alt test](Pictures/odds_ratio_eq.png)
+![alt test](Pictures/odds_ratio_ex.png)
 
 Group A had 1/3 the odds of group B **OR** Group B had 3 time the odds of having the outcome compared to group A.
 
@@ -1005,7 +1005,7 @@ ods graphics on;
 
 `Nopercent`suppresses cell percentages
 
-`Relrisk prints a table with risk ratios (probability ratios) and odds ratios
+`Relrisk` prints a table with risk ratios (probability ratios) and odds ratios
 
 Results:
 
@@ -1080,11 +1080,11 @@ Strength of this association is realatively strong since Cramer's V is -0.5287
 
 ```
 
-**Relative Risk* table shows another measure of strength association.
+**Relative Risk** table shows another measure of strength association.
 - Odds ratio shown in first row of table with 95% confidence limits. Interpreted as the odds of a top row value to be in the left column compared with the same odds in the bottom row.
 - In this case, a female has 0.0884 (9%) of the odds of dying compared with a male.
 
-**Cohort estimates** for each column interpreted as **obability ratios, not odds ratios**. You get the choice of assessing probabilities of left column (col1) or right column (col2).
+**Cohort estimates** for each column interpreted as **probability ratios, not odds ratios**. You get the choice of assessing probabilities of left column (col1) or right column (col2).
   - The col1 risk shows the ratio of probabilities of females to males being in the left column (27.25/80.90)=0.3369
 
 ##### When not to use Chi-Squared
@@ -1097,5 +1097,209 @@ For small sample size, we calculate **Exact** p-values
 
 For large sample size, we calculate **Asymptotic** p-values. It takes a lot of time and memory to compute exact p-values since SAS calculates *every* possible combination of crosstabulation frequencies.
 
+Exact p-values for Pearson Chi-Square
 
+![alt text](Pictures/exact_pvalues_pearsonchi.png)
+
+The exact p-value is the sum of probabilities of all tables with X^2 values **as great or greater** than that of the observed table!
+
+#### Exact p-values for Pearson Chi-Square in SAS
+
+```
+/*st105d03.sas*/
+ods graphics off;
+proc freq data=sasuser.exact;
+   tables A*B / chisq expected cellchi2 nocol nopercent;
+   title "Exact P-Values";
+run;
+
+ods graphics on;
+
+```
+
+Results:
+
+```
+                               Statistics for Table of A by B
+
+                    Statistic                     DF       Value      Prob
+                    ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+                    Chi-Square                     1      2.1000    0.1473
+                    Likelihood Ratio Chi-Square    1      2.8306    0.0925
+                    Continuity Adj. Chi-Square     1      0.3646    0.5460
+                    Mantel-Haenszel Chi-Square     1      1.8000    0.1797
+                    Phi Coefficient                      -0.5477
+                    Contingency Coefficient               0.4804
+                    Cramer's V                           -0.5477
+
+                     WARNING: 100% of the cells have expected counts less
+                              than 5. Chi-Square may not be a valid test.
+
+
+                                     Fisher's Exact Test
+                              ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+                              Cell (1,1) Frequency (F)         0
+                              Left-sided Pr <= F          0.2857
+                              Right-sided Pr >= F         1.0000
+
+                              Table Probability (P)       0.2857
+                              Two-sided Pr <= P           0.4286
+
+                                        Sample Size = 7
+
+```
+
+Warning suggests that p-value should not be trusted.
+
+Want to report the two-sided Pr <= P value.
+
+Difference between exact p-value (0.4286) and asymptotic p-value (0.1473). Exact tests tend to be more conservative than asymptotic tests
+
+
+#### Ordinal Variables - Mantel-Haenszel Chi-square test
+
+**Null Hypothesis** : There is no ordinal association between the row and column variables
+
+**Alternative Hypothesis** : There is an ordinal association between the row and column variables
+
+The Mantel-Haenszel Chi-Square Test determines whether an ordinal association exists. **Does Not** measure the strength of the ordinal association
+- More powerful than the general association chi-squared statistic for detecting an ordinal association
+  - All of the Mantel-Haenszel statistic's power is concentrated toward that objective
+  - Power of the general association statistic is dispersed over a greater number of alternatives
+
+#### Spearman Correlation Statistic
+
+To measure strength of ordinal association, you can use Spearman
+- Has range between -1 and 1
+- Has values close to 1 if there is relatively high degree of positive correlation
+- Has values close to -1 if there is a relatively high degree of negative correlation
+- Appropriate only if both variables are ordinal scaled and the values are in logical order
+
+**Spearman** correlation uses ranks of the data
+
+**Pearson** correlation uses the observed values when variable is numeric
+
+#### Using SAS
+
+```
+/*st105d04.sas*/
+ods graphics off;
+proc freq data=sasuser.Titanic;
+    tables Class*Survived / chisq measures cl;
+    format Survived survfmt.;
+    title1 'Ordinal Association between CLASS and SURVIVAL?';
+run;
+
+ods graphics on;
+```
+
+`chisq` produces Pearson chi-square, likelihood-ratio chi-square, and the Mantel-Haenszel chi-square. Also produces measures of association based on chi-square such as the phi coefficient, contingency coefficient and Cramer's V
+
+`measures` produces Spearman correlation statistic and other measures of association
+
+`CL` produces confidence bounds for the `measures` statistics
+
+Results of mantel-Haenszel:
+
+```
+                         Statistics for Table of Class by Survived
+
+                    Statistic                     DF       Value      Prob
+                    ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+                    Chi-Square                     2    127.8592    <.0001
+                    Likelihood Ratio Chi-Square    2    127.7655    <.0001
+                    Mantel-Haenszel Chi-Square     1    127.7093    <.0001
+                    Phi Coefficient                       0.3125
+                    Contingency Coefficient               0.2983
+                    Cramer's V                            0.3125
+
+```
+
+Results of spearman:
+
+```
+
+                           Statistics for Table of Class by Survived
+
+                                                                          95%
+         Statistic                              Value       ASE     Confidence Limits
+         ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+         Gamma                                -0.5067    0.0375    -0.5801    -0.4332
+         Kendall's Tau-b                      -0.2948    0.0253    -0.3444    -0.2451
+         Stuart's Tau-c                       -0.3141    0.0274    -0.3677    -0.2604
+
+         Somers' D C|R                        -0.2613    0.0226    -0.3056    -0.2170
+         Somers' D R|C                        -0.3326    0.0286    -0.3887    -0.2765
+
+         Pearson Correlation                  -0.3125    0.0267    -0.3647    -0.2602
+         Spearman Correlation                 -0.3097    0.0266    -0.3619    -0.2576
+
+         Lambda Asymmetric C|R                 0.1540    0.0331     0.0892     0.2188
+         Lambda Asymmetric R|C                 0.0317    0.0320     0.0000     0.0944
+         Lambda Symmetric                      0.0873    0.0292     0.0301     0.1445
+
+         Uncertainty Coefficient C|R           0.0734    0.0127     0.0485     0.0983
+         Uncertainty Coefficient R|C           0.0485    0.0084     0.0320     0.0650
+         Uncertainty Coefficient Symmetric     0.0584    0.0101     0.0386     0.0782
+
+                                      Sample Size = 1309
+
+```
+
+Spearman correlation (-0.3097) indicates that there is amoderate, negative ordinal relationship between class and survival
+
+ASE is asymptotic standard error (0.0266). Measure of standard error for larger samples (larger than 25 foe each degree of freedom in the Pearson chi-square stat)
+
+95% confidence interval (-0.3619, -0.2576) for spearman correlation statistic does not conatain 0, and tehrefore the relationship is significant at the 0.05 significance level.
+
+
+### Introduction to Logistic Regression
+
+Objectives
+- Define the concepts of logistic regression
+- Fit a binary logistic regression model using the `logistic` procedure
+- Describe the standard output form the logistic procedure with one continuous predictor variable
+- read and interpret odds ratio talbes and plots
+
+![alt text](Pictures/cont_vs_cat.png)
+
+If response variable is dichotomous (two categories), appropriate logistic regression model is binary logistic regression
+
+If more than 2 categories within response variable, then there are 2 possibilities
+- If response is nominal -> fit a *nominal* logistic regression model
+- If response is ordinal -> fit a *ordinal* logistic regression model
+
+![alt text](Pictures/ols_reg.png)     vs    ![alt text](Pictures/lpm_model.png)
+
+But can we really use a linear mondel?
+
+Also, there is no such thing as an observed probability -> least squares methods cannot be used since there are no residuals.
+
+Logistic regression model:
+
+![alt text](Pictures/log_reg_model.png)
+
+Logit Transformation:
+
+![alt text](Pictures/logit_t.png)
+
+`i` = indexes all cases (observations)
+
+`p_i` = probability that the even (ex. a sale) occurs in the ith case
+
+`ln` = natural log 
+
+- Modeling probability has bounds of 0 and 1
+- The logit has no upper or lower bounds
+- Logit is the natural log of the odds
+
+##### Assumption in logistic regression
+
+Logit has a linear relationship with the predictor variables.
+
+We are assuming that the relationship between our variable and probability follows the 'S' curve. This is so that we get a linear relationship between the logit and our variable.
+
+Our logistic regression model therefore becomes:
+
+![alt text](real_log_reg_model.PNG)
 
