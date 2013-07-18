@@ -344,9 +344,9 @@ quit;
 
  `Diagnostics` produces a panel display of diagnostic plots for linear models.
 
- ##### Diagnotstic plots
+##### Diagnostic plots
 
- Plot in upper left shows residuals vs fitted values from ANOVA model. Any patterns or trends in this plot indicates model misspecification
+Plot in upper left shows residuals vs fitted values from ANOVA model. Any patterns or trends in this plot indicates model misspecification
 
  Residual histogram and Q-Q plot at bottom left and middle left respectively test for normality assumption
  - Histogram has no unique peak and has short tales, but is approximately symmetric
@@ -790,3 +790,312 @@ Results for lsmeans:
 ```
 
 Taking disease x, puts it in its own data set, and run an anova against drug dose
+
+
+
+
+# Day 5
+
+## Chapter 5: Categorical Data Analysis
+
+### 5.1 Describing Categorical Data
+
+Objectives
+* Examine the distribution of categorical variables
+* Do preliminary examinations of associans between variables
+
+Categorical variables association
+* An associacion exists between two categorical variables if the distribution of one variable changes when the other variable changes
+* For no assiciation, the distribtion of the first variable stays constant for different levels of the other variable
+
+#### Crosstabulation Tables
+
+Crosstabulation table shows the number of observations for each combination of the row and column variables.
+
+By default, 4 measures in each cell
+- Frequency
+- Percent
+- Row Percent
+- Column Percent
+
+#### Proc Freq
+
+```
+proc freq data=sas-data-set;
+  tables table-requests<l options>;
+run;
+```
+
+`tables` requests tables and specifies options for producing tests.
+- General form is variable1*variable2*... where any number can be put in the tables statment.
+  - For 2 way, first represents rows and second represents columns
+
+#### Titanic example
+
+- 2,223 passengers
+- 1,517 fatalities
+
+Variables:
+- Survival statuss (1 or 0)
+- Age
+- Gender
+- Class (1,2,3)
+- Fare (cumulative total for a purchase for each person in a party)
+
+Code:
+
+```
+/*st105d01.sas*/
+title;
+proc format;
+    value survfmt 1 = "Survived"
+                  0 = "Died"
+                  ;
+run;
+
+proc freq data=sasuser.Titanic;
+    tables Survived Gender Class
+           Gender*Survived Class*Survived /
+           plots(only)=freqplot(scale=percent);
+    format Survived survfmt.;
+run;
+
+proc univariate data=sasuser.Titanic noprint;
+    class Survived;
+    var Age ;
+    histogram Age;
+    inset mean std median min max / format=5.2 position=ne;
+    format Survived survfmt.;
+run;
+```
+
+`FREQPLOT(<suboptions>)` requests a frequency plot. Available for frequency and crosstabulation tables
+
+`(Scale=)` specifies the scale of the frequencies to display. Default is `Scale=freq`. Can also use `scale=percent`
+
+In proc univariate, the line that reads:
+`inset mean std median min max / format=5.2 position=ne;`
+will put all of those variables in the same plot of the histogram.
+
+We look at the distribution of survived, gender and class. Also look at the crosstabulation of gender*survived, and class*survived.
+
+```
+
+                                      The FREQ Procedure
+
+                                                      Cumulative    Cumulative
+                 Survived    Frequency     Percent     Frequency      Percent
+                 ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+                 Died             809       61.80           809        61.80
+                 Survived         500       38.20          1309       100.00
+
+
+                                                     Cumulative    Cumulative
+                  Gender    Frequency     Percent     Frequency      Percent
+                  ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+                  female         466       35.60           466        35.60
+                  male           843       64.40          1309       100.00
+
+
+                                                    Cumulative    Cumulative
+                  Class    Frequency     Percent     Frequency      Percent
+                  ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+                      1         323       24.68           323        24.68
+                      2         277       21.16           600        45.84
+                      3         709       54.16          1309       100.00
+
+
+                                  Table of Gender by Survived
+
+                              Gender     Survived
+
+                              Frequency‚
+                              Percent  ‚
+                              Row Pct  ‚
+                              Col Pct  ‚Died    ‚Survived‚  Total
+                              ƒƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆ
+                              female   ‚    127 ‚    339 ‚    466
+                                       ‚   9.70 ‚  25.90 ‚  35.60
+                                       ‚  27.25 ‚  72.75 ‚
+                                       ‚  15.70 ‚  67.80 ‚
+                              ƒƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆ
+                              male     ‚    682 ‚    161 ‚    843
+                                       ‚  52.10 ‚  12.30 ‚  64.40
+                                       ‚  80.90 ‚  19.10 ‚
+                                       ‚  84.30 ‚  32.20 ‚
+                              ƒƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆ
+                              Total         809      500     1309
+                                          61.80    38.20   100.00
+
+
+```
+
+More women survived while more men died according to our crosstabulation table. It also turns out that as the higher class you are, the more chance you have of surviving (most of the lower class were men).
+
+### 5.2 Tests of Association
+
+Objectives
+- Perform a chi-square test for association
+- Examine the strength of association
+- Calculate exact p-values
+- Perform a Mantel-Haenszel chi-square test
+
+Using contingency table analysis!
+
+Assumng the same titanic example:
+
+**Null Hypothesis** = There is no association between gender and surival. The probability of surviving the titanic class was the same whether you were male or female
+
+**Alternative Hypothesis** = There **is** an association between gender and survival.
+
+
+#### Chi-Square Test
+
+**No Association** - Observed frequencies = Expected frequencies
+
+**Association** - Observed frequencies ~= Expected frequencies
+
+![alt text](Pictures/chi_squared_eq.png)
+
+This equation tests whether an association exists. It **does not** measure the strength of an association. It depends on sample size.
+
+The p-value for the chi-square test only indicates how confident you can be that the null hypothesis of no association is false. Doubling the size of the sample by duplicating each observation will double the value of the chi-square statistic, even though the strength of the association does not change.
+
+**Cramer's V statistic** can measure the strength of the association.
+
+- Has a range of -1 to 1 for 2 by 2 tables and 0 to 1 for larger tables. Values farther from 0 indicate stronger association
+
+#### Odds Ratio
+
+Odds ratio indicates how much more likely, **with respect to odds**, a certain event occurs in one group relative to its occurence in another group
+
+![alt test](Pictures/odds_eq.png)
+
+**Odds** are calculated **from** probabilities.
+
+**Odds ratio** is the ratio of odds, as seen below:
+
+![alt test](Pictures/odds_ratio_eq.png)
+
+Group A had 1/3 the odds of group B **OR** Group B had 3 time the odds of having the outcome compared to group A.
+
+#### Chi-Square Test in SAS
+
+```
+/*st105d02.sas*/
+ods graphics off;
+proc freq data=sasuser.Titanic;
+    tables (Gender Class)*Survived
+          / chisq expected cellchi2 nocol nopercent 
+            relrisk;
+    format Survived survfmt.;
+    title1 'Associations with Survival';
+run;
+
+ods graphics on;
+```
+
+`Chisq` produces chi-square test of association and the measures of association based on chi-square statistic
+
+`Expected` prints the expected cell frequencies under the hypothesis of no association
+
+`CellChi2` prints each cell's contribution to th total chi-square statistic
+
+`Nocol` suppresses column percentages
+
+`Nopercent`suppresses cell percentages
+
+`Relrisk prints a table with risk ratios (probability ratios) and odds ratios
+
+Results:
+
+```
+                       The FREQ Procedure
+
+                                  Table of Gender by Survived
+
+                           Gender          Survived
+
+                           Frequency      ‚
+                           Expected       ‚
+                           Cell Chi-Square‚
+                           Row Pct        ‚Died    ‚Survived‚  Total
+                           ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆ
+                           female         ‚    127 ‚    339 ‚    466
+                                          ‚    288 ‚    178 ‚
+                                          ‚ 90.005 ‚ 145.63 ‚
+                                          ‚  27.25 ‚  72.75 ‚
+                           ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆ
+                           male           ‚    682 ‚    161 ‚    843
+                                          ‚    521 ‚    322 ‚
+                                          ‚ 49.753 ‚ 80.501 ‚
+                                          ‚  80.90 ‚  19.10 ‚
+                           ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆƒƒƒƒƒƒƒƒˆ
+                           Total               809      500     1309
+
+
+                          Statistics for Table of Gender by Survived
+
+                    Statistic                     DF       Value      Prob
+                    ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+                    Chi-Square                     1    365.8869    <.0001
+                    Likelihood Ratio Chi-Square    1    372.9213    <.0001
+                    Continuity Adj. Chi-Square     1    363.6179    <.0001
+                    Mantel-Haenszel Chi-Square     1    365.6074    <.0001
+                    Phi Coefficient                      -0.5287
+                    Contingency Coefficient               0.4674
+                    Cramer's V                           -0.5287
+
+
+                                     Fisher's Exact Test
+                              ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+                              Cell (1,1) Frequency (F)       127
+                              Left-sided Pr <= F       7.351E-83
+                              Right-sided Pr >= F         1.0000
+
+                              Table Probability (P)    6.705E-83
+                              Two-sided Pr <= P        7.918E-83
+```
+
+The cell for survived=1 and Gender=female has the highest Chi-Square value (145.63). It contributes the most to the chi-square statistic.
+
+p-value for chi-square statistic is <.0001 < 0.05. We reject null hypothesis. **There is evidence of an association between gender and survived**.
+
+Strength of this association is realatively strong since Cramer's V is -0.5287
+
+```
+ The FREQ Procedure
+
+                          Statistics for Table of Gender by Survived
+
+                          Estimates of the Relative Risk (Row1/Row2)
+
+               Type of Study                   Value       95% Confidence Limits
+               ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+               Case-Control (Odds Ratio)      0.0884        0.0677        0.1155
+               Cohort (Col1 Risk)             0.3369        0.2894        0.3921
+               Cohort (Col2 Risk)             3.8090        3.2797        4.4239
+
+                                      Sample Size = 1309
+
+```
+
+**Relative Risk* table shows another measure of strength association.
+- Odds ratio shown in first row of table with 95% confidence limits. Interpreted as the odds of a top row value to be in the left column compared with the same odds in the bottom row.
+- In this case, a female has 0.0884 (9%) of the odds of dying compared with a male.
+
+**Cohort estimates** for each column interpreted as **obability ratios, not odds ratios**. You get the choice of assessing probabilities of left column (col1) or right column (col2).
+  - The col1 risk shows the ratio of probabilities of females to males being in the left column (27.25/80.90)=0.3369
+
+##### When not to use Chi-Squared
+
+Do not use assymptotic chi-squared test when more than 20% of cells have expected counts less than 5!
+
+p-values are based on the assumption that the test statistic follows a particular distribution when the sample size is sufficiently large.
+
+For small sample size, we calculate **Exact** p-values
+
+For large sample size, we calculate **Asymptotic** p-values. It takes a lot of time and memory to compute exact p-values since SAS calculates *every* possible combination of crosstabulation frequencies.
+
+
+
