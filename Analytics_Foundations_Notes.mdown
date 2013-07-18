@@ -1315,6 +1315,7 @@ proc logistic data=sas-data-set options
   oddsratio 'label' variable / options;
   output out=sas-data-set keyword=name / options;
 run;
+```
 
 `class` names the classification variables to be used in the analysis. Must precede `model` statement. By default, will be analyzed using effects coding
 
