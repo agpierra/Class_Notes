@@ -822,7 +822,7 @@ By default, 4 measures in each cell
 
 ```
 proc freq data=sas-data-set;
-  tables table-requests<l options>;
+  tables table-requests / options;
 run;
 ```
 
@@ -1301,5 +1301,469 @@ We are assuming that the relationship between our variable and probability follo
 
 Our logistic regression model therefore becomes:
 
-![alt text](real_log_reg_model.PNG)
+![alt text](Pictures/real_log_reg_model.PNG)
 
+#### Proc logistic
+
+Code:
+
+```
+proc logistic data=sas-data-set options
+  class variables / options;
+  model response=predictors / options;
+  units independent1=list ... / options;
+  oddsratio 'label' variable / options;
+  output out=sas-data-set keyword=name / options;
+run;
+
+`class` names the classification variables to be used in the analysis. Must precede `model` statement. By default, will be analyzed using effects coding
+
+`model` specifies response and predictor variables
+
+`output` creates output data set from input data and any requested statistics
+
+`units` enables you to obtain odds ratio estimate for specified change in a predictor variable
+
+`oddsratio` produces odds ratios for variables even when variables are involved in interactions with other covariates, and for classification variables that use any parameterization.
+
+ ```
+/*st105d05.sas*/
+proc logistic data=sasuser.Titanic
+              plots(only)=(effect oddsratio);
+    model Survived(event='1')=Age / clodds=pl;
+    title1 'LOGISTIC MODEL (1):Survived=Age';
+run;
+```
+
+`effect` requests a plot of predicted prob on y axis by predictor on the x axis
+
+`oddsratio` requests a plot of the odds ratio (along with its (1-alpha) confidence limits). Width can be changed using `alpha=` option in `proc logistic` statement
+
+`(event=)` specifies the event category for the binary response model. `proc logistic` models the probability of each event. Can specify value of event category in quotes or specify one of the following keywords:
+- `first` designates the first ordered category as the evnet
+- `last` designates the last ordered category as the event
+
+`clodds=pl` requests **profile likelihood** confidence intervals for the odds ratio of all predictor variables, which are desirable for small sample sizes.
+
+```
+ Response Profile
+
+                               Ordered                      Total
+                                 Value     Survived     Frequency
+
+                                     1            0           619
+                                     2            1           427
+
+                              Probability modeled is Survived=1.
+
+NOTE: 263 observations were deleted due to missing values for the response or explanatory
+      variables.
+
+
+                                   Model Convergence Status
+
+                        Convergence criterion (GCONV=1E-8) satisfied.
+
+
+                                     Model Fit Statistics
+
+                                                         Intercept
+                                          Intercept            and
+                            Criterion          Only     Covariates
+
+                            AIC            1416.620       1415.301
+                            SC             1421.573       1425.207
+                            -2 Log L       1414.620       1411.301
+
+```
+
+The smaller the SC the better. Smaller the AIC the better.
+
+```
+
+                                    The LOGISTIC Procedure
+
+                            Testing Global Null Hypothesis: BETA=0
+
+                    Test                 Chi-Square       DF     Pr > ChiSq
+
+                    Likelihood Ratio         3.3191        1         0.0685
+                    Score                    3.3041        1         0.0691
+                    Wald                     3.2932        1         0.0696
+
+
+                           Analysis of Maximum Likelihood Estimates
+
+                                             Standard          Wald
+              Parameter    DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+              Intercept     1     -0.1335      0.1448        0.8501        0.3565
+              Age           1    -0.00800     0.00441        3.2932        0.0696
+
+
+                 Association of Predicted Probabilities and Observed Responses
+
+                      Percent Concordant      51.3    Somers' D    0.050
+                      Percent Discordant      46.4    Gamma        0.051
+                      Percent Tied             2.3    Tau-a        0.024
+                      Pairs                 264313    c            0.525
+
+
+               Odds Ratio Estimates and Profile-Likelihood Confidence Intervals
+
+                  Effect         Unit     Estimate     95% Confidence Limits
+
+                  Age          1.0000        0.992        0.983        1.001
+
+```
+
+For global F-test, we can use either Likelihood Ratio, Score or Walk. **Use Likelihood Ratio**.
+
+Our model is not very good to begin with (Likelihood p-value > 0.05)
+
+For specific beta value, we use Analysis of Maximum Likelihood Estimates table. Age is not statistically significant (P-value = 0.0696 >0.05)
+
+For odds ratio estimate, as age increases by 1, you have 0.992 times the odds of surviving (estimate).
+
+Aka: As age increase by one, the odds of surviving decrease by 0.008%
+- odds after / odds before = 0.250
+
+![alt text](Pictures/lrm_odds_ratio.png)
+
+You can also look at the confidence interval in the odds to see whether age is a statistically significant variable.
+
+![alt text](Pictures/lrm_odds_ratio_ci.png)
+
+Because we are 95% confident that the true odds ratio is between 0.983 and 1.001, and this interval includes 1.000, the odds ratio is not significant at the 0.05 level
+
+
+
+##### Model assessment: Comparing pairs
+
+Counting concordant, discordant, and tied pairs is a way to assess how well the model predicts its own data and thus, how well the model fits
+
+In general, want high percentage of concordant pairs, and low percentages of discordant and tied pairs
+
+We must compare everyone who had the outcome of interest against everyone who did not
+
+Concordant pair
+- Dead at age 30 P(survived) = 0.4077
+- Survived at age 20 P(survived) = 0.4274
+
+Discordant pair
+- Dead at age 35 P(S) = 0.3981
+- Survived at age 45 P(S) = 0.3791
+
+Tied pair
+- 2 50 year olds, one dead one alive P(S) = 0.3697
+
+Association of Predicted Probabilities and Observed Responses table lists the several measures of association to help assess predictive ability of logistic model.
+
+
+### 5.4 Logistic Regression with Categorical Predictors
+
+Objectives
+- State how a logistic model with categorical predictors does and does not differe from one with continuous predictors
+- Describe what a `class` statement does
+- Define the standard output from the `logistic` procedure with categorical predictor variables
+
+![alt text](Pictures/cat_vs_cat_log.png)
+
+#### Class statement
+
+Creates a set of 'design variables' representing the information in the categorical variables
+- Character variables cannot be used, as is, in a model
+- Design variables are ones actually used in model calculations
+- Exist several 'parameterizations' available in `proc logistic`
+
+**Note:** By default, SAS uses effects coding
+
+![alt text](Pictures/effects_coding.png)
+
+Number of design variables created is number of levels of the `class` variable minus 1
+
+Effects coding measures the difference between a design variable and the overall average.
+
+##### Effects Coding example
+
+![alt text](Pictures/logit_effect_coding.png)
+
+If B_x is close to zero, then there is no difference (probabilistically) between D_x and the average
+
+##### Reference (Dummy) Coding
+
+![alt text](Pictures/dummy_coding.png)
+
+Reference coding measures the difference between a design variable and a reference variable.
+
+Each non reference B_x represents the difference of the logits for level x and the reference level
+
+The reference B_x represents the value of the logit when at the reference level
+
+Reference coding and effects coding does not necessarily agree in p-values because they test for different things.
+
+#### Multiple Logistic Regression
+
+```
+/*st105d06.sas*/
+proc logistic data=sasuser.Titanic plots(only)=(effect oddsratio);
+    class Gender(ref='male') Class(ref='3') / param=ref;
+    model Survived(event='1')=Age Gender Class / clodds=pl;
+    units age=10;
+    title1 'LOGISTIC MODEL (2):Survived=Age Gender Class';
+run;
+```
+
+`units` enables you to specify units of change for continuous explanatory variables so that customized odds ratios can be estimated
+
+`(ref='level') specifies the event category chosen as the reference level when using reference or effect parameterization. Default is `ref=last`
+
+`param=` specifies parametrization. Can specify for each variable name by typing it within parentheses after variable name.
+
+Results:
+
+```
+                                   Class Level Information
+
+                                                        Design
+                                Class      Value      Variables
+
+                                Gender     female      1
+                                           male        0
+
+                                Class      1           1      0
+                                           2           0      1
+                                           3           0      0
+
+
+                                   Model Convergence Status
+
+                        Convergence criterion (GCONV=1E-8) satisfied.
+
+
+```
+
+SAS will show coding itself if you do class statement
+
+```
+                                    The LOGISTIC Procedure
+
+                                     Model Fit Statistics
+
+                                                         Intercept
+                                          Intercept            and
+                            Criterion          Only     Covariates
+
+                            AIC            1416.620        992.315
+                            SC             1421.573       1017.079
+                            -2 Log L       1414.620        982.315
+
+
+                            Testing Global Null Hypothesis: BETA=0
+
+                    Test                 Chi-Square       DF     Pr > ChiSq
+
+                    Likelihood Ratio       432.3052        4         <.0001
+                    Score                  386.1522        4         <.0001
+                    Wald                   277.3202        4         <.0001
+
+
+                                  Type 3 Analysis of Effects
+
+                                                  Wald
+                          Effect      DF    Chi-Square    Pr > ChiSq
+
+                          Age          1       29.6314        <.0001
+                          Gender       1      226.2235        <.0001
+                          Class        2      103.3575        <.0001
+
+
+                           Analysis of Maximum Likelihood Estimates
+
+                                                Standard          Wald
+          Parameter           DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+          Intercept            1     -1.2628      0.2030       38.7108        <.0001
+          Age                  1     -0.0345     0.00633       29.6314        <.0001
+          Gender    female     1      2.4976      0.1661      226.2235        <.0001
+          Class     1          1      2.2907      0.2258      102.8824        <.0001
+          Class     2          1      1.0093      0.1984       25.8849        <.0001
+
+
+```
+
+AIC, SC and -2 Log L have all dropped, which is good.
+
+Likelihood ratio is good, and therefore one of are variables is statistically significant.
+
+Type 3 Analysis of effects show that age, gender and class are all statistically significant to predict survival. Significance in this table means that some difference in level of a variable is significant.
+
+Analysis of Maximum likelihood estimates shows that both class 1 and class 2 are statistically different than class 3 to model who survived.
+
+```
+                            The LOGISTIC Procedure
+
+                 Association of Predicted Probabilities and Observed Responses
+
+                      Percent Concordant      83.8    Somers' D    0.680
+                      Percent Discordant      15.8    Gamma        0.683
+                      Percent Tied             0.4    Tau-a        0.329
+                      Pairs                 264313    c            0.840
+
+
+               Odds Ratio Estimates and Profile-Likelihood Confidence Intervals
+
+           Effect                        Unit     Estimate     95% Confidence Limits
+
+           Age                        10.0000        0.708        0.625        0.801
+           Gender female vs male       1.0000       12.153        8.823       16.925
+           Class  1 vs 3               1.0000        9.882        6.395       15.513
+           Class  2 vs 3               1.0000        2.744        1.863        4.059
+
+```
+
+We want high values of concordant, and high values of discordant. This model is much better than the old model.
+
+9.882x the odds of survival if you were a class 1 traveller compared to class 3
+
+No odds ratios confidence intervals contain 1, therefore all variables are all significant.
+
+
+### 5.5 Stepwise Selection with Interaction
+
+Objectives
+- Fit a multiple logistic regression model with main effects and interactions using the backward elimination method
+- Explain interactions using graphs
+
+![alt text](Pictures/contcat_vs_cat.png)
+
+Similar to proc reg, you can find a best subset model with `proc logistic` stepwise methods. **Default selection criteria changes to 0.05 for forward, backward, stepwise for slentry and slstay**.
+
+#### Model Hierarchy
+
+Model hierarchy refers to the requirement that, for any term to be in the model, all effects contained in the term must be present in the model.
+
+For a more customized analysis, the `Hierarchy=` option specifies whether the hierarchy is maintained and whether a single effect or multiple effects are allowed to enter or leave the model in one step for forward, backward, and stepwise selection.
+
+##### SAS code
+
+```
+/*st105d07.sas*/  /*Part A*/
+proc logistic data=sasuser.Titanic plots(only)=(effect oddsratio);
+    class Gender(ref='male') Class(ref='3') / param=ref;
+    model Survived(event='1')=Age|Gender|Class @2 / 
+          selection=backward clodds=pl slstay=0.01;
+    units age=10;
+    title1 'LOGISTIC MODEL (3): Backward Elimination '
+           'Survived=Age|Gender|Class';
+run;
+```
+
+The bar notation with the @2 constructs a model with all the main effects and the two-factor interactions. @3 constructs a model with all of the main effects, two way and three-factor interactions. 
+
+`selection=` specifies method to select variables in model. Can be: `Backward`, `forward`, `selction`, `none`. `score represents best subset selection (default is `none`)
+
+```
+
+                                    The LOGISTIC Procedure
+
+                                   Residual Chi-Square Test
+
+                              Chi-Square       DF     Pr > ChiSq
+
+                                 13.2931        3         0.0040
+
+
+NOTE: No (additional) effects met the 0.01 significance level for removal from the model.
+
+
+                                Summary of Backward Elimination
+
+                      Effect                       Number          Wald
+              Step    Removed              DF          In    Chi-Square    Pr > ChiSq
+
+                 1    Age*Gender            1           5        4.3264        0.0375
+                 2    Age*Class             2           4        8.8477        0.0120
+
+
+                                  Type 3 Analysis of Effects
+
+                                                     Wald
+                       Effect            DF    Chi-Square    Pr > ChiSq
+
+                       Age                1       32.5663        <.0001
+                       Gender             1       40.0553        <.0001
+                       Class              2       44.4898        <.0001
+                       Gender*Class       2       43.9289        <.0001
+
+
+                           Analysis of Maximum Likelihood Estimates
+
+                                                   Standard          Wald
+        Parameter                DF    Estimate       Error    Chi-Square    Pr > ChiSq
+
+        Intercept                 1     -0.6552      0.2113        9.6165        0.0019
+        Age                       1     -0.0385     0.00674       32.5663        <.0001
+        Gender       female       1      1.3970      0.2207       40.0553        <.0001
+        Class        1            1      1.5770      0.2525       38.9980        <.0001
+        Class        2            1     -0.0242      0.2720        0.0079        0.9292
+        Gender*Class female 1     1      2.4894      0.5403       21.2279        <.0001
+        Gender*Class female 2     1      2.5599      0.4562       31.4930        <.0001
+
+```
+
+Selection is done for the best model, then gives you the results of that model.
+
+Age and gender are useful.
+
+Class 1 is different than class 3. Class 2 is not statistically different than class 3.
+
+However, looking at gender and class, we see that females of class 2 are different than females of class 3.
+
+Class bothers the relationship between gender and survival.
+
+```
+/*st105d07.sas*/  /*Part B*/
+proc logistic data=sasuser.Titanic 
+              plots(only)=oddsratio(range=clip);
+    class Gender(ref='male') Class(ref='3') / param=ref;
+    model Survived(event='1')=Age Gender|Class;
+    units age=10;
+    oddsratio Gender / at (Class=ALL) cl=pl;
+    oddsratio Class / at (Gender=ALL) cl=pl;
+    oddsratio Age / cl=pl;
+    title1 'LOGISTIC MODEL (3.1): Survived=Age Gender|Class';
+run;
+```
+
+`range=` with suboptions (min, max)|CLIP, specifies the range of the range of the displayed odds ratio axis. `Range=clip` has same effect as specifying the minimum odds ratio as min and the max odds ratio as max.
+
+`oddsratio` produces odds ratios for a variable even when the variable is involved in interactions with other covariates, and for classification variables that use any parameterization. 
+
+`AT` specifies fixed levels of the interacting covariates. 
+
+
+# Summary of everything
+
+In morning, take the concept assessment.
+- No hand calculation
+- No computer calculation
+- No calculations
+- Formula sheet provided
+- Bring writing utensil (calculator if you want)
+- True/false, multiple choice, short answer
+  - LSR line
+  - What is variance
+  - All concept questions
+- 3 hours to take it
+
+In afternoon, SAS exam
+- Open everything
+- 3 problems already covered
+  - Exercises/code done in class
+  - Walking through all the problems
+    - Explore data set
+    - Give me blah blah blah
+  - Need to provide output
+  - Need to interpret output
+  - Need to hand in code
