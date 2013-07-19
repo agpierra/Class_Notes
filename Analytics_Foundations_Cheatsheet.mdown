@@ -37,7 +37,7 @@ Produces:
               ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
 ```
 
-By default SAS prints the lines above. You can add option to means statement to request additional or alternate statistics.
+By default, SAS prints the lines above. You can add options to means statement to request additional or alternate statistics.
 
 ```
 /*st101d01.sas*/  /*Part C*/
@@ -90,7 +90,9 @@ run;
 ```
 
 a) Overall mean is 98.25
+
 b) Interquartile range is 0.90
+
 c) Values somewhat differ
 
 
@@ -114,3 +116,237 @@ proc univariate data=*SAS-data-set* options;
 	probplot *variables* / options;
 	inset *keywords* / options;
 run;
+```
+
+`var` specifies numeric variables to analyze
+
+`id` specifies a variable used to label the five lowest and five highest values in the output
+
+`histogram` creates high-resolution histograms
+
+`probplot` creates a high-resolution Q-Q plot
+
+`inset` places a box or table of summary statistics (called an inset) directly in a graph created with a `cdfplot`, `histogram`, `ppplot`, `probplot`, or `qqplot` statement. The `inset` statement **must** follow the `plot` statement that creates the plot that you want to augment.
+
+`gpath= *file-specification* <(url=)>` specifies location for all graphics output generated while destination is open
+
+**Selected option for** `HISTOGRAM` and `PROBPLOT` **statements:**
+
+`normal<(options)>` creates a normal probability plot.
+- options `(mu= sigma=)` determine the mean and std of the normal distribution used to create reference lines.
+- curve overlays in `histogram` and diagonal reference line in `probplot`
+- The est option requests that the value be estimated from the data `(mu=est sigma=est)`
+
+**Selected option for** `HISTOGRAM` **statement:**
+
+`kernel` superimposes kernel density estimates on the histogram
+
+### Example
+
+```
+/*st101d02.sas*/  /*Part A*/
+proc univariate data=sasuser.testscores;
+    var SATScore;
+    histogram SATScore / normal(mu=est sigma=est) kernel;
+    inset skewness kurtosis / position=ne;
+    probplot SATScore / normal(mu=est sigma=est);
+    inset skewness kurtosis;
+    title 'Descriptive Statistics Using PROC UNIVARIATE';
+run;
+```
+
+Produces:
+
+```
+                                   The UNIVARIATE Procedure
+                                      Variable:  SATScore
+
+                                            Moments
+
+                N                          80    Sum Weights                 80
+                Mean                 1190.625    Sum Observations         95250
+                Std Deviation      147.058447    Variance            21626.1867
+                Skewness           0.64202018    Kurtosis            0.42409987
+                Uncorrected SS      115115500    Corrected SS        1708468.75
+                Coeff Variation    12.3513656    Std Error Mean      16.4416342
+
+
+                                  Basic Statistical Measures
+
+                        Location                    Variability
+
+                    Mean     1190.625     Std Deviation          147.05845
+                    Median   1170.000     Variance                   21626
+                    Mode     1050.000     Range                  710.00000
+                                          Interquartile Range    195.00000
+
+
+                                  Tests for Location: Mu0=0
+
+                       Test           -Statistic-    -----p Value------
+
+                       Student's t    t  72.41525    Pr > |t|    <.0001
+                       Sign           M        40    Pr >= |M|   <.0001
+                       Signed Rank    S      1620    Pr >= |S|   <.0001
+
+
+                                   Quantiles (Definition 5)
+
+                                    Quantile      Estimate
+
+                                    100% Max          1600
+                                    99%               1600
+                                    95%               1505
+                                    90%               1375
+                                    75% Q3            1280
+                                    50% Median        1170
+                                    25% Q1            1085
+                                    10%               1020
+                                    5%                 995
+                                    1%                 890
+                                    0% Min             890
+
+
+                                     Extreme Observations
+
+                             ----Lowest----        ----Highest---
+
+                             Value      Obs        Value      Obs
+
+                               890       69         1490        8
+                               910       74         1520       42
+                               970        6         1520       54
+                               990       51         1590       70
+                              1000        4         1600       25
+
+```
+
+- Mean of data is 1190.625. Approximately equal to median = 1170.
+	- Distribution is fairly symmetric
+- Standard deviation is 147.058.
+	- Average variability around mean is appx. 147 points
+- Distribution is slightly skewed to the right
+- Distribution ahs slightly heavier tales than normal distribution
+
+![alt text](Pictures/proc_uni_dist.png)
+
+Bin identified with midpoint of 1100 has approximately 33% of the values.
+
+
+```
+
+                               Parameters for Normal Distribution
+
+                                 Parameter   Symbol   Estimate
+
+                                 Mean        Mu       1190.625
+                                 Std Dev     Sigma    147.0584
+
+
+                        Goodness-of-Fit Tests for Normal Distribution
+
+                Test                  ----Statistic-----   ------p Value------
+
+                Kolmogorov-Smirnov    D       0.08382224   Pr > D       >0.150
+                Cramer-von Mises      W-Sq    0.09964577   Pr > W-Sq     0.114
+                Anderson-Darling      A-Sq    0.70124822   Pr > A-Sq     0.068
+
+
+                               Quantiles for Normal Distribution
+
+                                          -------Quantile------
+                                Percent    Observed   Estimated
+
+                                    1.0     890.000     848.516
+                                    5.0     995.000     948.735
+                                   10.0    1020.000    1002.162
+                                   25.0    1085.000    1091.436
+                                   50.0    1170.000    1190.625
+                                   75.0    1280.000    1289.814
+                                   90.0    1375.000    1379.088
+                                   95.0    1505.000    1432.515
+                                   99.0    1600.000    1532.734
+```
+
+![alt text](Pictures/proc_uni_qq.png)
+
+45-degree line represents where the data values would fall if they came from normal distribution. There does not appear to be any severe departure from normality.
+
+We use **Kolmogorov-Smirnov** and **Anderson-Darline** to determine if the distribution is normal. Null hypothesis is that distribution is normal. **High p-values are desirable** for normality.
+
+### Exercises
+
+Use sasuser.NormTemp data to answer:
+
+- What are the minimum, maximum, mean and the std for BodyTemp? Does the variable appear to be normally distributed?
+
+```
+proc univariate data=sasuser.NormTemp noprint;
+	var BodyTemp;
+	histogram BodyTemp / normal(mu=est sigma=est noprint) kernel;
+	inset min max skewness kurtosis / position=ne;
+	probplot BodyTemp / normal(mu=est sigma=est);
+	inset min max skewness kurtosis;
+run;
+```
+
+The distribution appears approximately normal.
+
+
+
+## Proc SGPLOT
+
+Procedure creates one or more plots and overlays them on a single set of axes. You can use `SGPLOT` to create statistical graphics such as histograms and regression plots, in addition to simple graphics such as box plots, scatter plots and line plots.
+
+```
+proc sgplot <*options*>;
+	dot *category-variable* / options;
+	hbar *category-variable* / options
+	hbox *response-variable* / options
+	histogram *response-variable* / options
+	needle x = *variable* y = *numeric-variable* / options
+	reg x = *numeric-variable* y = *numeric-variable* / options
+	scatter x = *variable* y = *variable* / options
+	vbar *category-variable* / options
+	vbox *response-variable* / options
+run;
+```
+
+`Vbox` creates a vertical box plot showing the distribution of data
+	- `datalabel = option` adds data labels for **outlier markers**
+
+`Hbox` creates a horizontal box plot showing the distribution of data
+
+### Example
+
+```
+/*st101d02.sas*/  /*Part B*/
+proc sgplot data=sasuser.testscores;
+    vbox SATScore / datalabel=IDNumber;
+    format IDNumber 8.;
+    refline 1200 / axis=y label;
+    title "Box-and-Whisker Plots of SAT Scores";
+run;
+```
+
+`refline *variable|value-1 ... value-n*` creates a horizontal or vertical reference line
+	- `/ axis=` places axis on x or y
+
+`noprint` in `proc univariate` and `histogram` statements suppresses the printing of the tabular output (often used when stats are being reported in insets of plot)
+
+
+### Exercises
+
+Use sasuser.NormTemp data to answer:
+
+b) Create box plots for BodyTemp. Use ID to identify outliers. Display a reference line at 98.6 degrees. Does the average body temperature seem to be 98.6 degrees?
+
+```
+proc sgplot data=sasuser.NormTemp;
+	vbox BodyTemp / datalabel=ID;
+	format ID 3.;
+	refline 98.6 / axis = y label;
+run;
+```
+
+The average body temperature seems to be somewhat less than 98.6 degrees as was seen in the tabular output
