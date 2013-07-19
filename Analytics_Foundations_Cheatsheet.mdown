@@ -15,6 +15,11 @@ run;
 
 `var` specifies numeric variables for which you want to calculate descriptive statistics.
 
+In `proc means` statement options:
+- `clm` requests confidence limits for the mean
+- `stderr` requests the standard error of the mean
+- `alpha=` constructs confidence intervals with a different confidence level
+
 ### Example
 
 ```
@@ -272,7 +277,7 @@ Bin identified with midpoint of 1100 has approximately 33% of the values.
 
 45-degree line represents where the data values would fall if they came from normal distribution. There does not appear to be any severe departure from normality.
 
-We use **Kolmogorov-Smirnov** and **Anderson-Darline** to determine if the distribution is normal. Null hypothesis is that distribution is normal. **High p-values are desirable** for normality.
+We use **Kolmogorov-Smirnov** and **Anderson-Darling** to determine if the distribution is normal. Null hypothesis is that distribution is normal. **High p-values are desirable** for normality.
 
 ### Exercises
 
@@ -317,7 +322,7 @@ run;
 
 `Hbox` creates a horizontal box plot showing the distribution of data
 
-### Example
+### Examples
 
 ```
 /*st101d02.sas*/  /*Part B*/
@@ -335,6 +340,36 @@ run;
 `noprint` in `proc univariate` and `histogram` statements suppresses the printing of the tabular output (often used when stats are being reported in insets of plot)
 
 
+We can also use proc univariate to conduct t-tests:
+
+```
+ods graphics off;
+proc univariate data=sasuser.testscores mu0=1200;
+    var SATScore;
+    title 'Testing Whether the Mean of SAT Scores = 1200';
+run;
+ods graphics on;
+```
+
+`mu0=` specifies the value of the mean or location parameter in the null hypothesis for tests of location
+
+Outputs
+
+```
+                                 Tests for Location: Mu0=1200
+
+                       Test           -Statistic-    -----p Value------
+
+                       Student's t    t   -0.5702    Pr > |t|    0.5702
+                       Sign           M        -5    Pr >= |M|   0.3019
+                       Signed Rank    S      -207    Pr >= |S|   0.2866
+```
+
+The t-statistic and p-value are labeled Student's t and Pr > |t| respectively
+
+We cannot reject null hypothesis at the 0.05 level in this case
+
+
 ### Exercises
 
 Use sasuser.NormTemp data to answer:
@@ -350,3 +385,65 @@ run;
 ```
 
 The average body temperature seems to be somewhat less than 98.6 degrees as was seen in the tabular output
+
+
+## Proc TTEST
+
+The TTest procedure performs t-tests and computes confidence limits for one sample, paired observations, two independent sample, and the AB/BA crossover design. Can also be used to produce histograms, QQ plots, box plots, and confidence limit plots.
+
+```
+proc ttest data=*SAS-data-set*;
+	class *variable*;
+	paired *variables*;
+	var *variables*;
+run;
+```
+
+`class` specifies the two-level variable for the analysis. **Only one variable** is allowed in the `class` statement.
+
+`paired *pairlists*` specifies the `pairlists` to identify the variables to be compaired in paired comparisons
+
+`var` specifies *numeric* response variables for the analysis
+
+
+
+### Example
+
+```
+proc ttest data=sasuser.testscores h0=1200
+           plots(shownull)=interval;
+    var SATScore;
+    title 'Testing Whether the Mean of SAT Scores = 1200 '
+          'Using PROC TTEST';
+run;
+```
+
+`H0=` specifies the value of the mean or location parameter in the null hypothesis for tests of location (=0 by default)
+
+`plots(shownull) = interval` includes a plot of *confidence intervals* of the mean. `shownull` places a vertical reference line at the mean value of the null hypothesis
+
+Output:
+
+```
+                                     The TTEST Procedure
+
+                                      Variable:  SATScore
+
+                  N        Mean     Std Dev     Std Err     Minimum     Maximum
+
+                 80      1190.6       147.1     16.4416       890.0      1600.0
+
+                    Mean       95% CL Mean        Std Dev      95% CL Std Dev
+
+                  1190.6      1157.9   1223.4       147.1       127.3    174.2
+
+                                     DF    t Value    Pr > |t|
+
+                                     79      -0.57      0.5702
+```
+
+Notice the 95% confidence interval around the mean includes null hypothesis value of 1200, implying a lack of statistical significance at the alpha=0.05 level.
+
+Along with this table, we get a QQ plot and the following:
+
+![alt text](Pictures/ttest_plots.png)
