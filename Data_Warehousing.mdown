@@ -1,0 +1,193 @@
+# Intro to Data Warehousing
+
+Much of the projects has to do with access of data.
+
+## Agenda
+
+- Data Warehousing: Definition and Importance
+- Principles of Database Design & Performance
+- Relational Database Model
+- Terminoligy
+- Facts and Dimensions
+- Demonstration
+
+## Data Warehousing: Definition and Importance
+
+**Moore's Law**: processing 'capacity' doubles every 18 months: CPU, cache, memory.
+
+More aggressive cousing: Disk storage 'capacity' doubles every 9 months
+
+Shortage of talent to get value out of data
+
+**Date Warehouse:** A purpose built system for *measuring, monitoring and identifying* actions taken and yet to be taken in order to *optimize performance*.
+
+Importance of data warehousing:
+- 80%+ of time spent on data preparation
+	- Querying
+	- Cleaning
+	- Transforming
+	- Structuring
+- Time required to get data
+- Usefulness of data stored
+- ...
+
+Business Case *for* data warehousing
+- Measure + monitor impact of actions
+	- Increase rev, reduce costs, increase productivity & efficiency
+- Compliance (goverment mandates)
+- Scientific discovery
+- Support of operational analytics
+
+Business Case *against* data warehousing
+- Common myths
+	- Expensive to build
+	- Take long time to build
+	- Tough to get right
+	- low ROI
+	- Few successes and many failures
+
+Why is data warehousing hard?
+- Lack of stable requirements
+- Inexperience with data intensive projects
+- Traditional database design techniques breakdown as data increase
+- Design constraints have non-linear impacts on performance
+- Complex and new architectures
+
+## Principles of Database Design & Performance
+
+Data base design is an optimization problem. We must:
+- Minimize query response time subject to design's contraints:
+	- Complexity
+	- User satisfaction
+	- # joins
+	- # sorts
+	- Ability to parallelize
+	- Indexing
+	- Record width
+
+Key factors influencing performance
+- parallelism
+	- at 20mb/sec it takes 14.5 hours to read 1tb serially.
+	- with perfect parallelism and 16 parallel processes it takes 54 minutes
+- sorts
+	- quick sort alroithms become exponentially more expensive as you sort more records
+- joins
+	- brute-force method (joining without sorting)
+	- sort merge
+	- hash
+		- efficient but memory intensive
+- indicies
+
+## Relational database model
+
+Data is stored in 'relations' (sets) which are perceived by the user as tables.
+
+Each 'relation' is composed of
+- Records
+- Attributes or fields
+
+Relationship between tables
+- one-to-one
+- one-to-many
+- many-to-many
+
+Relationships between a pair of tables is established implicitly through matching values of a shard field (primary and foregn keys).
+
+As long as a user is familiar with the relationships among the tables in the database
+- They can access data in almost unlimited number of ways
+- Can access data from tables that are directly related as well as from tables that are indirectly related
+
+## Terminology
+
+**Table**
+- Known as a **relation** or **entity** in relational database theory
+- Cheif structure in relational database, composed of many fields and records
+- Represents something tangible such as a person place or thing
+
+**Record**
+- Composed of the entire set of fields in a table, regardless of whether or not the fields contain any values (ie row of a table)
+- Known as a **Tuple** in relational database theory
+
+**Attribute**
+- Smallest structure in relational database (a column)
+- Used to store data in the database and it represents a characteristic of the subject of the table in which the field resides
+- Divided into two categories
+	- Key attributes
+		- **Primary key (PK):** Uniquely identifies a record within a table
+		- **Foreign key (FK):** Used to establish a relationship between a pair of tables
+	- Non-key attributes
+
+**Domain**
+- Valid range of values for an attribute
+- Defines
+	- Values (range of values for an attribute)
+	- Atomic Meaning (A domain only has one meaning)
+	- Format (data type + length)
+
+**Constraints**
+- A rule that defines limit on attribute values.
+- Examples
+	- Check: DoB person must be older than 18
+	- Not null
+	- Unique
+	- Foreign/Primary Key
+
+**View**
+- Virtual table composed of the fields from one or more tables
+- Doesn't store any data on its own, only draws its data from tables on which it is based
+- For a view to draw data from multiple tables, you must have joins, or relationships between the tables
+
+**Index**
+- A structure within RDBMS used to improve data processing
+- Key and index used interchangeably
+	- Keys are logical structures used to identify records within a table
+	- Indexes are physical structures used to optimize data processing
+
+**Relationships**
+- Connection established between pair of tables
+	- Tables connected by a primary key and a foreign key, or is linked together by a third table (linking table)
+- Every relationship can be characterized by:
+	- **Type of relationship** that exists between tables
+		- One-to-one
+			- Single record in first table is related only to one record in second table
+		- One-to-many
+			- Single record in first table can be related to one or more records in second.
+			- A single record in second can be related **only to one** record in first table
+		- Many-to-Many
+			- Single record in first table can be related to one or more records in second table and vice-versa
+	- **Type of participation** each table has within the relationship
+		- Mandatory
+			- Records in Table A must exist before any new records can be entered into Table B
+		- Optional
+			- Not necessary for records in Table A to exist in order to enter any new records into Table B
+		
+## Facts and Dimensions
+
+Dimensional modeling describes a **measurement process**
+- Measurements themselves are **facts**
+	- ex. sales amount
+- Context of the measurements are **dimensions**
+	- ex. characteristics of product sold
+
+Powerful modeling method
+- Simple and easy to understand
+- Improves performance (highly parallelize-able)
+- Extends easily
+	- new dimensions or changes to existing is easy
+	- new facts and changes to existing easy
+
+**Fact**
+- Table to store one or more business measures described by one or more directions
+- Only one declaired grain
+	- ex. line item, daily inventory, monthly snapshot, etc.
+- Have 2 or more foreign keys (FK) linking to one or more Dimension's primary keys
+
+**Dimension**
+- Describes measurement (of the fact table) using vocabulary that business is familiar with
+	- Each dimension contains a primary-surrogate key and one or more descriptive attributes
+	-Dimension attributes serve as the primary means for query constraints and groupings
+
+SAS can create a hash table from each dimension table. With this HASH, the entire join can be performed in memory, can be parallelized (due to independence of dimensions), and can  result to a vast improvement of the querying time.
+
+
+
