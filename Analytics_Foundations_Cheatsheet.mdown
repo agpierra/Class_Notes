@@ -1,0 +1,116 @@
+# Analytics Foundations Cheat Sheet
+
+![alt text](Pictures/overview_stats_models.png)
+
+## Proc MEANS
+
+```
+proc means data = *SAS-data-set* options;
+	class *variables*;
+	var *variables*;
+run;
+```
+
+`class` specifies variables whose values define the subgroup gombinations for the anlysis.
+
+`var` specifies numeric variables for which you want to calculate descriptive statistics.
+
+### Example
+
+```
+proc means data=sasuser.testscores;
+    var SATScore;
+    title 'Descriptive Statistics Using PROC MEANS';
+run;
+```
+
+Produces:
+
+```
+                                      The MEANS Procedure
+
+                                 Analysis Variable : SATScore
+
+               N            Mean         Std Dev         Minimum         Maximum
+              ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+              80         1190.63     147.0584466     890.0000000         1600.00
+              ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+```
+
+By default SAS prints the lines above. You can add option to means statement to request additional or alternate statistics.
+
+```
+/*st101d01.sas*/  /*Part C*/
+proc means data=sasuser.testscores 
+           maxdec=2 
+           n mean median std q1 q3 qrange;
+    var SATScore;
+    title 'Selected Descriptive Statistics for SAT Scores';
+run;
+```
+
+Produces:
+
+```
+                                      The MEANS Procedure
+
+                                 Analysis Variable : SATScore
+
+                                                          Lower          Upper       Quartile
+  N           Mean         Median        Std Dev       Quartile       Quartile          Range
+ ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+ 80        1190.63        1170.00         147.06        1085.00        1280.00         195.00
+ ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+
+```
+
+### Exercise
+
+Data in sasuser.NormTemp is from an article which questions the notion that the true mean body temperature is 98.6. There are 65 males and 65 females. There is also some question about whether mean body temperatures for women are the same as for men. The variables in data are:
+
+`ID` Identification number
+
+`BodyTemp` Body temperature
+
+`Gender` Coded(M,F)
+
+`HeartRate` Heart rate in bpm
+
+Use `proc means` to answer:
+- What is the overall mean and std of body temp in sample?
+- what is the interquartile range of body temperature?
+- Do the mean values seem to differ between men and women?
+	- Hint: Use the `Class` statement in `proc means` with `gender` as the class variable
+
+```	
+proc means data=sasuser.NormTemp maxdec=2 mean std q1 q3 qrange;
+	var BodyTemp;
+	class gender;
+run;
+```
+
+a) Overall mean is 98.25
+b) Interquartile range is 0.90
+c) Values somewhat differ
+
+
+## Statistical Graphics Procedures in SAS
+
+`proc sgscatter` creates single-cell and multi-cell scatter plots and scatter plot matrics with optional fits and ellipses.
+
+`proc sgplot` creates single-cell plots with a variety of plot and chart types.
+
+`proc sgpanel` creates single-page or multi-page panels of plots and charts conditional on classification variables.
+
+`proc sgrender` provides a way to create plots from graph templates that you modified or wrote yourself.
+
+## Proc UNIVARIATE
+
+```
+proc univariate data=*SAS-data-set* options;
+	var *variables*;
+	id *variable*;
+	histogram *variables* / options;
+	probplot *variables* / options;
+	inset *keywords* / options;
+run;
