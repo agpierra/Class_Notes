@@ -44,6 +44,7 @@ Produces:
 
 By default, SAS prints the lines above. You can add options to means statement to request additional or alternate statistics.
 
+
 ```
 /*st101d01.sas*/  /*Part C*/
 proc means data=sasuser.testscores 
@@ -447,3 +448,381 @@ Notice the 95% confidence interval around the mean includes null hypothesis valu
 Along with this table, we get a QQ plot and the following:
 
 ![alt text](Pictures/ttest_plots.png)
+
+## Proc Corr
+
+You can use corr procedure to produce correlation statistics and scatter plots for your data. By default, it produces pearson correlation statistics and corresponding p-values
+
+```
+proc corr data=*saas-data-set* options;
+	var *variables*;
+	with *variables*;
+	id *variables*;
+run;
+```
+
+In the `proc corr` line, you can use:
+
+`plots <(only)> = ( xxxxxx )`
+
+where xxxxx =
+- ALL
+- Matrix
+- Scatter
+- Histogram
+- Nvar=all|n
+- Ellipse=prediction|confidence|none
+
+### Example
+
+```
+ods graphics / reset=all imagemap;
+proc corr data=sasuser.fitness rank
+          plots(only)=scatter(nvar=all ellipse=none);
+    var RunTime Age Weight Run_Pulse
+        Rest_Pulse Maximum_Pulse Performance;
+    with Oxygen_Consumption;
+    id name;
+    title "Correlations and Scatter Plots with Oxygen_Consumption";
+run;
+```
+
+Measures oxygen consumption vs all the `var` variables.
+
+```
+/*st103d01.sas*/  /*Part B*/
+ods graphics / reset=all;
+proc corr data=sasuser.fitness nosimple 
+          plots=matrix(nvar=all histogram);
+    var RunTime Age Weight Run_Pulse
+         Rest_Pulse Maximum_Pulse Performance;
+    title "Correlations and Scatter Plot Matrix of Fitness Predictors";
+run;
+```
+
+Creates a matrix of plots which contains regressions of each of the `var` variables against each other. On the diagonals are histograms, as specified in the `matrix(nvar=all histogram)` line. For square matrix plot, you cannot have a `with` statement.
+
+Low p-value -> relationship is statistically relevant. High r -> strong positive correlation. 
+
+## Proc Reg
+
+```
+proc reg data=*SAS-data-set* options;
+	model *dependents=regressors* / options
+run;
+quit;
+```
+
+**Note:** `quit` statement is required since `reg` procedure supports `run`-group processing.
+
+### Example
+
+```
+/*st103d02.sas*/
+proc reg data=sasuser.fitness;
+    model Oxygen_Consumption = RunTime;
+    title 'Predicting Oxygen_Consumption from RunTime';
+run;
+quit;
+```
+
+Results:
+
+```
+                                                        Analysis of Variance
+ 
+                                                               Sum of           Mean
+                           Source                   DF        Squares         Square    F Value    Pr > F
+
+                           Model                     1      633.01458      633.01458      84.00    <.0001
+                           Error                    29      218.53997        7.53586                     
+                           Corrected Total          30      851.55455                                    
+
+
+                                        Root MSE              2.74515    R-Square     0.7434
+                                        Dependent Mean       47.37581    Adj R-Sq     0.7345
+                                        Coeff Var             5.79442                       
+
+
+                                                        Parameter Estimates
+ 
+                                                         Parameter       Standard
+                           Variable              DF       Estimate          Error    t Value    Pr > |t|
+
+                           Intercept              1       82.42494        3.85582      21.38      <.0001
+                           RunTime                1       -3.31085        0.36124      -9.17      <.0001
+```
+
+
+`Mean Square` is the ratio of the sum of squares and the degrees of freedom. Corresponds to the amount of variability associated with each degree of freedom for each source of variation.
+
+`Model` is the variability explained by model (between group)
+
+`error` is variability unexplained by model (within group)
+
+`corrected total` is the total variability in data (Total)
+
+F value tests whether the slope of the predictor variable is equal to 0. Small p-value (less than 0.05) means that you have enough evidence to reject the null hypothesis. Therefore, you can conclude that the simple linear regression model fits the data better than the baseline model.
+
+`Root MSE` root mean square error is an estimate of the standard deviation of the response variable at each value of the predictor value. Square root of the MSE
+
+`Dependent mean` is the overall mean of the response variable
+
+`Coeff Var` is the size of the standard deviation relative to the mean. Calculated as (RootMSE/dependentmean)*100
+
+
+For **paramater estimate** table:
+
+`Parameter estimate` is the estimated beta value in the simple linear regression
+
+`t value` is the t statistic which is calculated by dividing the parameter estimates by their corresponding standard error estimates
+
+
+
+### Multiple linear regression
+
+```
+/*st103d04.sas*/
+ods graphics off;
+proc reg data=sasuser.fitness;
+    model Oxygen_Consumption=Performance RunTime;
+    title 'Multiple Linear Regression for Fitness Data';
+run;
+quit;
+
+ods graphics on;
+```
+
+Results:
+
+```
+ 
+                                                               Sum of           Mean
+                           Source                   DF        Squares         Square    F Value    Pr > F
+
+                           Model                     2      646.33101      323.16550      44.09    <.0001
+                           Error                    28      205.22355        7.32941                     
+                           Corrected Total          30      851.55455                                    
+
+
+                                        Root MSE              2.70729    R-Square     0.7590
+                                        Dependent Mean       47.37581    Adj R-Sq     0.7418
+                                        Coeff Var             5.71450                       
+
+
+                                                        Parameter Estimates
+ 
+                                                         Parameter       Standard
+                           Variable              DF       Estimate          Error    t Value    Pr > |t|
+
+                           Intercept              1       71.52626        8.93520       8.00      <.0001
+                           Performance            1        0.06360        0.04718       1.35      0.1885
+                           RunTime                1       -2.62163        0.62320      -4.21      0.0002
+```
+**Note:** Number of parameters in model includes the intercept
+
+`model df` is the number of parameters minus 1 (3-1)
+
+`error df` is the number of observations (31) minus the number of parameters in model (3)
+
+`corrected total df` is number of observations minus 1
+
+`f value` is the MeanSquareModel/MeanSquareError
+
+small p-value -> reject the null hypothesis that B1 = B2 = 0 and conclude that at least one B_i ~= 0
+
+For this case, the model can be written as:
+
+**Oxygen_consumption** = 71.5626 + 0.06360x**Performance** - 2.62163x**RunTime**
+
+
+### Model Selection
+
+Can eliminate one variable at a time, but manually for large data sets can take an extreme amount of time.
+
+Model Selection options
+- Stepwise
+- Forward
+- Backward
+
+All possible regressions ranked using
+- RSquare
+- AdjRSQ
+- CP
+
+Mallows' Cp
+- Indicator of effective variable selection within model
+- **Look for models** with `Cp <= p`, where p equals the number of parameters in the model, **including the intercept**
+- Mallows recommends choosing the first (fewest variables) model where Cp approaches p
+
+Hocking's criterion
+- `Cp <= p` for prediction
+- `Cp <= 2p - pfull + 1` for parameter estimation
+
+```
+/*st103d05.sas*/  /*Part A*/
+ods graphics / imagemap=on;
+
+proc reg data=sasuser.fitness plots(only)=(rsquare adjrsq cp);
+    ALL_REG: model oxygen_consumption 
+                    = Performance RunTime Age Weight
+                      Run_Pulse Rest_Pulse Maximum_Pulse
+            / selection=rsquare adjrsq cp;
+    title 'Best Models Using All-Regression Option';
+run;
+quit;
+```
+
+`selection=` enables you to choose the different selection models. First listed is the one that determines the sorting order in output
+	- RSQUARE
+	- ADJRSQ
+	- CP
+
+```
+/*st103d05.sas*/  /*Part B*/
+ods graphics / imagemap=on;
+
+proc reg data=sasuser.fitness plots(only)=(cp);
+    ALL_REG: model oxygen_consumption 
+                    = Performance RunTime Age Weight
+                      Run_Pulse Rest_Pulse Maximum_Pulse
+            / selection=cp rsquare adjrsq best=20;
+    title 'Best Models Using All-Regression Option';
+run;
+quit;
+```
+
+`best= n` selects the best n models
+
+```
+/*st103d06.sas*/
+ods graphics off;
+proc reg data=sasuser.fitness;
+   PREDICT: model Oxygen_Consumption 
+                  = RunTime Age Run_Pulse Maximum_Pulse;
+   EXPLAIN: model Oxygen_Consumption 
+                  = RunTime Age Weight Run_Pulse Maximum_Pulse;
+   title 'Check "Best" Two Candidate Models';
+run;
+quit;
+
+ods graphics on;
+```
+
+Can have multiple regressions in same proc reg. Above we are testing the best 'predict' and best 'explain' (see hookings criterion)
+
+### Stepwise selection
+
+`Forward` selects the best one-variable model. Then it selects the best two variables among those that contain the first variable. Stops when it reaches the point where no additional variables have p-value levels less than some stopping criterion (0.50, by default)
+
+`Backward` starts with full model. Next, the variable that is least significant, give the other variables is removed from the model. Continues this process until all of the remaining variables have p-values less than a stopping criterion value (0.10 by default)
+
+`Stepwise` works like a combination of forward and backward. Default entry p-value is 0.15 and the default stay p-value is also 0.15.
+
+**Caution**: Automated model selection results in:
+- Biases in parameter estimates, predictions and standard errors
+- Incorrect calculation of degrees of freedom
+- p-values that tend to err on the side of overestimating significance (increasing type 1 error probability)
+
+```
+/*st103d07.sas*/
+
+proc reg data=sasuser.fitness plots(only)=adjrsq;
+   FORWARD:  model oxygen_consumption 
+                    = Performance RunTime Age Weight
+                      Run_Pulse Rest_Pulse Maximum_Pulse
+            / selection=forward Slentry=0.10;
+   BACKWARD: model oxygen_consumption 
+                    = Performance RunTime Age Weight
+                      Run_Pulse Rest_Pulse Maximum_Pulse
+            / selection=backward Slstay=0.10;
+   STEPWISE: model oxygen_consumption 
+                    = Performance RunTime Age Weight
+                      Run_Pulse Rest_Pulse Maximum_Pulse
+            / selection=stepwise;
+   title 'Best Models Using Stepwise Selection';
+run;
+quit;
+```
+
+
+## Proc score
+
+```
+proc score data=*sas-data-set* score=*sas-data-set* out=*sas-data-set* other_options;
+	var *variables*;
+run;
+```
+
+Produces predicted values by outputting the parameter estimates from `proc reg` into a data set, and then scoring the new observations in `proc score`
+
+### Example
+
+```
+/*st103d03.sas*/
+data Need_Predictions;
+    input RunTime @@;
+    datalines;
+9 10 11 12 13
+;
+run;
+```
+datalines above represent x values for which a prediction is wanted.
+
+```
+proc reg data=sasuser.fitness noprint outest=Betas;
+    PredOxy: model Oxygen_Consumption=RunTime;
+run;
+quit;
+
+proc print data=Betas;
+    title "OUTEST= Data Set from PROC REG";
+run;
+
+proc score data=Need_Predictions score=Betas
+           out=Scored type=parms;
+    var RunTime;
+run;
+```
+
+**Note:** `type=parms` is important when you run `proc score`
+
+```
+proc print data=Scored;
+    title "Scored New Observations";
+run;
+```
+
+proc reg p-option is another way to do this:
+
+```
+/*st103d03.sas*/  /*Self Study*/ 
+data Need_Predictions;
+    input RunTime @@;
+    datalines;
+9 10 11 12 13
+;
+run;
+
+data Predict;
+    set Need_Predictions 
+        sasuser.fitness;
+run;
+
+ods graphics off;
+
+proc reg data=Predict;
+    model Oxygen_Consumption=RunTime / p;
+    id RunTime;
+    title 'Oxygen_Consumption=RunTime with Predicted Values';   
+run;
+quit;
+
+ods graphics on;
+
+```
+
+
+
+
+
