@@ -1,0 +1,226 @@
+# Exam Review
+
+## Material Exam
+
+50 Questions
+
+MC, T/F, Short Answer
+
+All conceptual
+
+No notes, no books, no internet, no friends
+
+Formula sheet / tables
+
+## Computing Assessment
+
+Notes, internet, books, no friends
+
+3 questions (5-10 parts)
+
+submit.ncsu.edu (or email)
+
+# Fundamental stats concepts
+
+Categorical vs continuous
+
+Categorical
+- Nominal
+- Ordinal
+
+Populations vs Samples
+
+Parameter vs Statistic
+
+Central tendency, location, quartiles
+- What do distributions look like
+
+Spread of distribution
+- Range
+- IQR
+- Variance
+- Std
+
+Normal distribution
+- Mean = median
+- Symmetric
+- Unimodal
+- Unbounded
+- 68 95 99.7
+
+Shape
+- Skewness
+- Kurtosis
+
+Sampling distribution, confidence interval
+- CLT
+
+Hypothesis test
+- Null hypothesis / alternative hypothesis
+- Test statistic
+- P value
+- Decision rule
+- Conclusion
+
+Type I/II error
+
+## Regression
+
+**ALWAYS** plot your data
+
+Pearson correlation coefficient, r
+- Define
+- Properties
+
+Correlation does not imply causation
+
+Problems with correlation
+
+Simple linear regression
+- y = B_o + B_1*x + error
+
+Interpret both slope and intercept
+
+Residuals = actual - predicted
+
+TSS, SSE, SSR/SSM
+
+R^2
+- Percentage of variation you can explain with your model
+
+Hypothesis test for B_1
+
+**Assumptions**
+- Linearity of the mean
+- Normality of errors
+- Homoscedasticity
+- Inependence of means
+
+## Multiple linear regression
+
+Global f-test
+
+No pefect collinearity
+
+R^2_A
+
+Two goals of modeling
+
+Model selection techniques
+- Stepwise
+	- Forward
+	- Backward
+	- Stepwise
+- All possible
+	- R^2
+	- Adj R^2
+	- Mallow's Cp
+
+**Know advantages and disadvantages**
+
+Violation of assumptions
+- How to evaluate?
+- How to fix?
+
+Residual plots
+
+Ploynomial Regression
+
+Multicollinearity
+- Correlation, VIF, Condition Inex
+- Solutions
+
+Spearman correlation
+- Ranked everything, took pearson correlation f the ranks
+
+AIC, SBC
+
+Outliers vs influential points
+- Differences
+- How to evaluate
+- How to fix?
+	- Can't delete. Must investigate
+
+## ANOVA
+
+Two-sample hypothesis test
+- Assumptions
+
+Equal vs Unequal variance
+
+Hypothesis test for variances
+
+One-way ANOVA
+- Null vs alternative
+
+TSS, SSB, SSW
+
+Assumptions
+- Normality of population or errors
+
+Observational studies vs experiments
+
+Blocking
+- control for external factors
+- Assumptions
+	- Treatments are randomly distributed within each block
+
+Post-hoc tests
+- Comparisonwise error
+- Experimentwise error
+
+Tukey, Dunnett adjustments
+
+Two-way anova
+
+Interactions
+- When two variables interact, as the level of one variable change,s it influences the relationship between another variable and y
+
+Categorical Data Analysis
+- Examined Distributions
+
+Tests of association
+- Pearson Chi2
+- Likelihood ratio Chi2
+- Mantel-Haenzsel Chi2
+
+Strength of association
+- Cramer's V
+- Odds Ratios (2x2)
+- Spearman (ordinal vs ordinal)
+
+TTS = SSB + SSW = SSB + SSBL + SSW
+
+Sample size requirements
+- Need < 20% of cells to hvae expected counts under 5
+- Fisher's exact test 
+
+## Logistic regression
+
+Can be used to predict any categorical variable
+
+We introduced binary logistic regression
+
+Why not OLS?
+
+Assumption
+- If you use logit, we will yield a straight line
+
+Parameter estimates
+- Odds ratios
+
+Effects vs Reference coding
+- How to code
+- Interpretation
+
+Model selection
+- concordant
+- discordant
+- tied
+
+logit(p) = log(p/(1-p)) = Bo + B1*x
+
+where x e {0, 1}
+
+
+

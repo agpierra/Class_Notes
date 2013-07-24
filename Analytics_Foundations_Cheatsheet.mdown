@@ -509,9 +509,16 @@ Low p-value -> relationship is statistically relevant. High r -> strong positive
 ```
 proc reg data=*SAS-data-set* options;
 	model *dependents=regressors* / options
+	output out=*sas-data-set* keyword=*names*;
 run;
 quit;
 ```
+`output` creates a new sas data set that saves diagnostic measures calculated after fitting the model. At least one keyword=names specification is required
+
+`plots=( )` controls plots produced through ODS graphics
+- diagnotstics
+- residualplot
+- fitplot
 
 **Note:** `quit` statement is required since `reg` procedure supports `run`-group processing.
 
@@ -822,7 +829,74 @@ ods graphics on;
 
 ```
 
+## Proc SGScatter
+
+Creates a paneled graph of scatter plots for multiple combinations of variables depending on the plot statement you use. Can create:
+- paneled graphs of scatter plots
+- panaled graphs of scatter plots with shared axes
+- scatter plot matrix with prediction ellipses
+- diagonal with histograms and density plots
+
+```
+proc sgscatter options;
+	compare x= *variable|variable-1...variable-n*
+			y= *variable|variable-1...variable-n*
+			/ options;
+	matrix variable-1 ... variable-n / options;
+	plot *plot-requests* / options;
+run;
+```
+
+`compare` creates a comparative panel of scatter plots with shared axes
+
+`Matrix` creates a scatter plot matrix
+
+`plot` creates a paneled graph that contains multiple independednt scatter plots
+
+```
+/* st201d01.sas */ /* Part A */
+proc sgscatter data=sasuser.school;
+ compare y=reading3
+ 	     x=(words1 letters1 phonics1);
+ title 'Scatter Plots of READING3 by WORDS1 LETTERS1 and PHONICS1';
+run; 								
+```
+
+Can also use `proc reg`
+
+```
+/* st201d01.sas */ /* Part B */
+options formdlim="_";
+proc reg data=sasuser.school 
+	plots (only)=diagnostics (unpack);
+   	model reading3 = words1 letters1 phonics1;
+	output out=out r=residuals;
+title 'School Data: Regression and Diagnostics';
+run;
+quit;   
+```
+
+`formdlim` specifies a character to delimit page breaks in sas output; 
+
+`diagnostics(unpack)` produces a summary panel of fit diagnostics.
+- `stats=` determines which model fit statistics are included in the model
+- `unpack` produces the eight plots in the panel as individual plots
+
+`r=residuals` creates a variable r in dataset out of the residuals in the model. We can then look at the distribution of these residuals in `proc univariate`
+
+From running this, because the adjusted R-square for the model is 0.6904, the results of the three tests administered in the fall of the school year account for about 69% of the variability in the scores of the reading test administered in the spring.   
 
 
+
+```
+/* st201d01.sas */ /* Part C */
+proc univariate data=out normal;
+  var residuals;
+run;
+```
+
+`normal` requests tests for normality that include a series of goodness-of-fit tests based on empirical distribution function. 
+
+**Use Kolmogorov-Smirnov** and **Anderson-Darline**
 
 
