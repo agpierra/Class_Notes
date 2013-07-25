@@ -387,6 +387,22 @@ run;
 
 The average body temperature seems to be somewhat less than 98.6 degrees as was seen in the tabular output
 
+### Plotting scatter plots
+
+```
+/* st201d02.sas */
+
+options formdlim="_";
+title1 "Sasuser.Paper Data Set";
+ods html close;
+ods listing;
+proc sgplot data=sasuser.paper;
+ scatter x=amount y=strength;
+ title2 "Scatter Plot";
+run;
+```
+
+
 
 ## Proc TTEST
 
@@ -752,6 +768,348 @@ run;
 quit;
 ```
 
+### Regression of higher degrees
+
+```
+proc sgplot data=sasuser.paper;
+    reg  x=amount y=strength / lineattrs =(color=brown       
+         pattern=solid) legendlabel="Linear";
+title2 "Linear Model";
+run; 
+
+proc sgplot data=sasuser.paper;
+    reg  x=amount y=strength / degree=2 lineattrs =(color=green       
+         pattern=mediumdash) legendlabel="2nd Degree";
+title2 "Second Degree Polynomial";
+run;
+
+proc sgplot data=sasuser.paper;
+   reg  x=amount y=strength / degree=3 lineattrs =(color=red   
+        pattern=shortdash) legendlabel="3rd Degree";
+title2 "Third Degree Polynomial";
+run;
+
+proc sgplot data=sasuser.paper;
+    reg  x=amount y=strength / degree=4 lineattrs =(color=blue
+      pattern=longdash) legendlabel="4th Degree";
+title2 "Fourth Degree Polynomial";
+run; 
+```
+
+`degree=` specifies the degree of the polynomial fit
+
+You cannot create powers of variables within `proc reg`. We must run a data step that creates necessary items.
+
+```
+/* st201d03.sas */
+title;
+title2;
+
+data paper;
+   set sasuser.paper;
+   amount2 = amount**2;
+   amount3 = amount**3;
+   amount4 = amount**4;
+run;
+
+proc reg data=paper ;
+   model strength= amount amount2 amount3 amount4 / scorr1(tests);
+title "Paper Data Set: 4th Degree Polynomial";
+run;
+quit;
+```
+
+`score1` displays the squared semi-partial correlation coefficients using type 1 sums of squares.
+- `tests` requests f-tests, p-values and cumulative r-square values because variables are sequentially added to a model. Uses f-test demoninator MSE for the full model specified in model statement.
+- `seqtests` uses f-test denominator MSE for  model containing all the independent variables that were added to the model up to and including variable in question 
+
+```
+                                                        Parameter Estimates
+ 
+                                                                                   Squared
+                           Parameter       Standard                           Semi-partial     Cumulative    ------Type I-----
+      Variable     DF       Estimate          Error    t Value    Pr > |t|     Corr Type I       R-Square    F Value    Pr > F
+
+      Intercept     1        3.43333        0.80170       4.28      0.0005               .              0        .       .    
+      Amount        1       -1.68444        1.45927      -1.15      0.2643         0.54625        0.54625      36.11    <.0001
+      amount2       1        1.02389        0.87380       1.17      0.2575         0.10748        0.65372       7.11    0.0163
+      amount3       1       -0.22222        0.20982      -1.06      0.3044         0.07620        0.72992       5.04    0.0384
+      amount4       1        0.01611        0.01743       0.92      0.3682         0.01293        0.74285       0.85    0.3682
+
+```
+
+Although it appears that none of the slopes are significantly different than 0, it is because the p values calculated are given that all the other variables are in the model.
+
+Type I p-values are sequential. Calculate the significance of a variable given the previous variables are in the model.
+
+Fitting a cubic model:
+
+```
+/* st201d04.sas */
+proc reg data=paper plots (unpack) =(diagnostics (stats=none)); 
+   Cubic_Model: model strength=amount amount2 amount3 / lackfit 
+   scorr1(tests);
+title "Paper Data Set: 3rd Degree Polynomial";   
+run;
+quit;
+```
+
+`lackfit` performs a lack of fit test. Compares the variation around the model with 'pure' variation within replicated observations. This test measures the adequacy of the specified model and can be specified only if some observations in your design are replicated
+
+```
+                                                        Parameter Estimates
+ 
+                                                                                   Squared
+                           Parameter       Standard                           Semi-partial     Cumulative    ------Type I-----
+      Variable     DF       Estimate          Error    t Value    Pr > |t|     Corr Type I       R-Square    F Value    Pr > F
+
+      Intercept     1        2.73280        0.26060      10.49      <.0001               .              0        .       .    
+      Amount        1       -0.36900        0.32208      -1.15      0.2669         0.54625        0.54625      36.41    <.0001
+      amount2       1        0.22339        0.11651       1.92      0.0712         0.10748        0.65372       7.16    0.0154
+      amount3       1       -0.02862        0.01270      -2.25      0.0369         0.07620        0.72992       5.08    0.0369
+```
+
+Overall F-test is significant.
+
+Lack of fit test is not significant (pvalue 0.36820), therefore there is no inadequacy of the specefied model. Type I test shows that all three slopes are significant in model.
+
+### Multicollinearity
+
+VIF > 10 -> presence of strong collinearity
+
+Condition index
+- Between 10 and 30 suggest weak dependencies
+- Between 30 and 100 indicate moderate dependencies
+- Greater than 100 indicate strong collinearity
+- For large condition index, proportion of variation explained by principal components > 0.5
+
+Using `Collin` and `collinnoint`
+
+![alt text](Pictures/collin_stat.png)
+
+```
+/* st201d05.sas */
+title 'Collinearity Diagnosis for the Cubic Model';
+
+proc corr data=paper nosimple plots=matrix;
+   var amount amount2 amount3;
+run;
+
+proc reg data=paper;
+   model strength=amount amount2 amount3 / vif collin collinoint;
+run;
+quit;
+title; 
+```
+
+`nosimple` suppresses printing simple descriptive stats for each variable
+
+`vif` produces variance inflation factors with parameter estimates
+
+`collin` requests a detailed analysis of collinearity among the regressors
+
+`collinoint` requests the same analysis as `collin` with the intercept variable adjusted out rather than included in diagnostics
+
+### Model diagnostics
+
+```
+/* st202d01.sas */
+ods graphics / imagemap=on;
+ods listing close;
+ods html style=analysis;
+proc reg data=sasuser.cars2  plots (label)=all;
+   model price = hwympg hwympg2 horsepower
+     / vif collin collinoint influence spec partial;
+   id model;
+   output out=check r=residual p=pred rstudent=rstudent h=leverage;
+run;
+quit;
+```
+
+`influence` requests that a detailed analysis of the influence of each observation on the estimate and the predicted values be prented
+
+`spec` performs a test so that the first and second moments of the model are correctly specified. Null hypothesis maintains that the errors are homoscedastic, independent of the regressors, and that several technical assumptions about the model specification are valid.
+
+`partial` requests partial regression leverage plots for each regressor
+
+```
+                                                         The REG Procedure
+                                                           Model: MODEL1
+                                                     Dependent Variable: Price 
+
+                                                      Test of First and Second
+                                                        Moment Specification
+ 
+                                                     DF    Chi-Square    Pr > ChiSq
+
+                                                      8         16.49        0.0359
+                                                                                                  23
+
+                                                         The REG Procedure
+                                                           Model: MODEL1
+                                                     Dependent Variable: Price 
+
+                                                         Output Statistics
+ 
+                                                     Hat Diag        Cov              -------------------DFBETAS------------------
+      Obs            Model    Residual    RStudent          H      Ratio     DFFITS   Intercept     Hwympg    hwympg2   Horsepower
+
+        1   Integra            -1.0276     -0.2177     0.0244     1.0774    -0.0344      0.0059    -0.0218     0.0232      -0.0151
+        2   Legend              5.2465      1.1274     0.0367     1.0236     0.2199     -0.0266    -0.0837     0.0843       0.0424
+        3   100                12.9697      2.8930     0.0239     0.7108     0.4527      0.0885    -0.2313     0.1656      -0.0353
+        4   90                  4.3697      0.9304     0.0239     1.0317     0.1456      0.0285    -0.0744     0.0533      -0.0113
+        5   535i                5.6921      1.2598     0.0882     1.0639     0.3917     -0.2901     0.3016    -0.2385       0.3528
+```
+
+In log window, there is warning due to higher ordered terms. May want to consider alternative to evaluate constant variance assumption instead of moment specification.
+
+**Note:** null hpyothesis for chi-square test in the first and second moment specification is:
+- Errors are homoscedastic
+- Errors are independent of the regressors
+- Several technical assumptions about the model specification are valid. For example, correct model is specified
+
+Included in output is partial influence option output
+
+By evaluating histogram distribution of residuals for price and Q-Q plot of residuals for price, we do not see any major problems with normality assummption
+
+Plot of residuals versus predicted values may cause concern for the assumption of equal variances. This can be evaluated with spearman rank correlation coefficient between the absolute values of the residuals and the predicted values.
+
+```
+data check;
+   set check;
+   abserror=abs(residual);
+run;
+
+proc corr data=check spearman nosimple;
+   var abserror pred;
+run;
+```
+
+Output:
+
+```
+                                                 2  Variables:    abserror pred     
+
+
+                                             Spearman Correlation Coefficients, N = 81 
+                                                     Prob > |r| under H0: Rho=0
+ 
+                                                                      abserror          pred
+
+                                        abserror                       1.00000       0.60274
+                                                                                      <.0001
+
+                                        pred                           0.60274       1.00000
+                                        Predicted Value of Price        <.0001              
+
+Spearman rank correlation coefficient between the absolute values of residuals and predicted values is 0.603. High p-value (<0.0001) indicates a strong correlation between absolute values of residuals and predicted values. Residuals increase as predicted values increase.
+
+
+To assess model fit, examine plots of residuals versus independent variables, rf plot, and the plot of observed values vs predicted.
+
+Residual-Fit spread plot shows that model is a good fit and explains most of the variation in the data
+
+## Proc stdize
+
+```
+proc stdize options;
+	var *variables*;
+run;
+```
+
+```
+/* st201d06.sas */
+options formdlim="_";
+proc stdize data=sasuser.paper method=mean out=paper1(rename=(amount=mcamount));
+   var amount;
+run;
+
+data paper1;
+   set paper1;
+   mcamount2 = mcamount**2;
+   mcamount3 = mcamount**3;
+run;                               *ST201d06.sas;      
+```
+
+`method=` specifies the name of the method for computing location and scale measures.
+- `mean` `median` `std` `range`
+- `method=mean` subtracts the mean of the variable for every observation.
+
+We can also do this in SQL:
+
+```
+/***altertanively, use a SQL and a DATA step to center the variable*/
+proc sql;
+   select mean(amount) into: mamount
+   from sasuser.paper;
+run;
+
+data paper2;
+   set sasuser.paper;
+   mcamount=amount-&mamount;
+   mcamount2 = mcamount**2;
+   mcamount3 = mcamount**3;
+run;
+```
+
+When variables have a polynomial relationship with price, it might be wise to center these variables to rediuce collinearity problems with the models. You must create higher-order terms for the variables before using them in model statement of `proc reg`
+
+```
+/* st201d10.sas */
+proc stdize data=sasuser.cars method=mean out=sasuser.cars2;
+   var citympg hwympg fueltank weight;
+run;
+
+data sasuser.cars2;
+   set sasuser.cars2;
+   citympg2 = citympg*citympg;
+   hwympg2 = hwympg*hwympg;
+   fueltank2=fueltank*fueltank;
+   fueltank3=fueltank2*fueltank;
+run; 	
+
+/* st201d11.sas */
+ods graphics / reset=all;
+
+title 'Model Selection Cars2 Data Set';
+proc reg data=sasuser.cars2 plots(only) = criteria ;
+   backward: 
+   model price = citympg citympg2 hwympg hwympg2 cylinders
+                 enginesize horsepower fueltank fueltank2 fueltank3
+                 luggage weight
+                 / selection=backward slstay=0.1;
+   forward:
+   model price = citympg citympg2 hwympg hwympg2 cylinders
+                 enginesize horsepower fueltank fueltank2 fueltank3
+                 luggage weight
+                 / selection=forward slentry=0.1;
+   Rsquared:
+   model price = citympg citympg2 hwympg hwympg2 cylinders
+                 enginesize horsepower fueltank fueltank2 fueltank3
+                 luggage weight
+                 / selection=rsquare adjrsq cp sbc aic best=3;
+   plot cp.*np. / vaxis=0 to 30 by 5 haxis=0 to 12 by 1 
+                  cmallows=red nostat nomodel;
+   symbol v=circle w=4 h=1;
+   Adjusted_R2:
+   model price = citympg citympg2 hwympg hwympg2 cylinders
+                 enginesize horsepower fueltank fueltank2 fueltank3
+                 luggage weight 
+                 / selection=adjrsq rsquare cp sbc aic best=10;
+run;
+quit;  
+title;
+```
+
+`labelvars` requests list of regressors in the relevant model be used to label the best model at each value of the number of parameters. supported only when panel is unpacked.
+
+`sbc` `aic` computes SBC and AIC stat for each model
+
+`cmallows=` requests a Cp=p reference line and specifies color
+
+`haxis=` `vaxis=` specifies tick mark values for horizontal axis / specifies range for vert axis
+
+
 
 ## Proc score
 
@@ -899,4 +1257,27 @@ run;
 
 **Use Kolmogorov-Smirnov** and **Anderson-Darline**
 
+Can examine examine the relationship of one variable with different variables:
 
+```
+/* st201d08.sas */
+proc sgscatter data=sasuser.cars;
+   plot price*(citympg hwympg cylinders enginesize horsepower fueltank
+	    luggage weight); 
+run;
+
+
+ods graphics  / imagemap=on;
+ods listing close;
+ods html style=statistical;
+proc sgscatter data=sasuser.cars;
+ plot price*(citympg hwympg fueltank weight) / pbspline;
+run;
+ods html close;
+ods listing;
+
+```
+
+When curvature is seen, may be useful to add a smooth curve to the plots.
+
+`pbspline` adds a fitten, penalized B-spline curve to the scatter plot
