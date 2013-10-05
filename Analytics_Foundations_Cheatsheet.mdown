@@ -1001,6 +1001,7 @@ Output:
 
                                         pred                           0.60274       1.00000
                                         Predicted Value of Price        <.0001              
+```
 
 Spearman rank correlation coefficient between the absolute values of residuals and predicted values is 0.603. High p-value (<0.0001) indicates a strong correlation between absolute values of residuals and predicted values. Residuals increase as predicted values increase.
 
