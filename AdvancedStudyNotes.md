@@ -97,8 +97,8 @@ Must have one instrumental variable for every endogenous variable in model
 
 ## Endogeneity Test
 
-*H_o* : x_i is exogenous
-*H_a* : x_i is endogenous
+- *H_o* : x_i is exogenous
+- *H_a* : x_i is endogenous
 
 (want high p-value)
 
@@ -109,8 +109,8 @@ Must have one instrumental variable for every endogenous variable in model
 
 ## Over-specification Test
 
-*H_o* : Not too many instrumental variables
-*H_a* : Too many instrumental variables
+- *H_o* : Not too many instrumental variables
+- *H_a* : Too many instrumental variables
 
 (want high p-value)
 
@@ -136,8 +136,8 @@ Accounting for Heteroscedasticity:
 
 ## Formal Tests for heteroscedasticity
 
-*H_o* : Homoscedasticity
-*H_a* : heteroscedasticity
+- *H_o* : Homoscedasticity
+- *H_a* : heteroscedasticity
 
 
 ### White's General Test
@@ -319,3 +319,84 @@ Same model as the fixed effects model, except every alpha\_i can be written as:
 	- *H_o* : Random effects good
 	- *H_a* : Fixed effects good
 
+## Count Data (Discrete data)
+
+Need to use **Poisson** / **Negative Binomial**  Regression
+
+Count data is integer data bounded below (typically zero) and typical unbounded above. Does not typically follow a normal distribution due to lower bound. Often assumed to follow poisson distribution.
+
+### Poisson Distribution
+
+Only one parameter, `lamda`, in *discrete* Poisson distribution, which is the mean 
+
+### Poisson Regression
+
+Response variable is assumed to follow a poisson distribution with mean *lambda\_i*
+
+Poisson regression models the mean *lambda\_i*
+
+![alt](Pictures/poissonreg1.png)
+![alt](Pictures/poissonreg2.png)
+
+This **guarantees** positive predicted values.
+
+**Must** use **MLE** instead of OLS
+
+#### Interpretation of Parameter estimates
+
+#### 1. Dummy variables:
+
+![alt](Pictures/dummyinterpret.png)
+![alt](Pictures/interpretbetas.png)
+
+#### 2. Continuous variables:
+
+![alt](Pictures/continterpret.png)
+
+## Overdispersion
+
+- **Equidispersion:** equal mean and variance
+- **Underdispersion:** variance < mean (rare)
+- **Overdispersion:** variance > mean (most common)
+
+Poisson distribution assumes equidispersion
+
+## Negative Binomial Regression
+
+Poisson distribution is a special case of the negative binomial distribution.
+
+Model and interpretation remains same as in Poisson regression, just a different underlying distribution
+
+### Likelihood Ratio Test
+
+Determines if Negative Binomial Model is an improvement over a Poisson model because of overdispersion
+
+Steps:
+
+1. Evaluate model with Poisson regression and record log(Likelihood) value
+2. Evaluate model with Negative Binomial regression and record log(Likelihood) value
+3. Calculate:
+
+![alt](Pictures/loglikelihood.png)
+
+Hypothesis test on chi^2:
+
+- *H_o* : Poisson regression (alpha = 0)
+- *H_a* : Negative Binomial regression (alpha > 0)
+
+In Negative Binomial Regression: **Variance = Mean + Alpha\*Mean^2**
+
+## Zero-Inflated Data
+
+**Definition:** Occurs when there are a large amount of zeros in count data
+
+**Problem:** Can throw-off the model accuracy because it distorts an accurate measurement of the mean
+
+**Solution:** Use a *Zero-inflated Poisson* (ZIP) or *Zero-inflated Negative Binomial* (ZINB) model to help reduce problem
+
+### Zero Inflated Regression
+
+Two-stage regression models. Steps:
+
+1. Model determines which category data falls into (zero vs non-zero)
+2. Model predicts the value (Poisson or NB regression)
