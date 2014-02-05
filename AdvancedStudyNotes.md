@@ -12,7 +12,7 @@ They produced biased estimates,  but tend to have more precision than OLS estima
 
 ![alt](Pictures/mse_bias.PNG)
 
-![alt](Pictures/precision.PNG)
+![alt](Pictures/precision.png)
 
 
 ## Principal Components
